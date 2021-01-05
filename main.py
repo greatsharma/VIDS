@@ -3,7 +3,7 @@ import time
 import argparse
 import numpy as np
 
-from detectors import simple_detectors
+from detectors import simple_detectors, yolo_detector
 from camera_metadata import CAMERA_METADATA
 from trackers import centroid_tracker, kalman_tracker
 from utils import cv_utils, detector_utils, tracker_utils
@@ -53,8 +53,10 @@ class VehicleTracking(object):
 
         if self.detector_type in ["prevframe_diff", "staticbg_diff"]:
             self.detector = simple_detectors.FrameDiffDetector(is_valid_cntrarea, self.detector_type, initial_frame)
-        else:
+        elif self.detector_type in ["mog", "mog2", "knn"]:
             self.detector = simple_detectors.BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
+        else:
+            self.detector = yolo_detector.YoloDetector(initial_frame)
 
     def _init_tracker(self):
         lane_detector = tracker_utils.init_lane_detector(self.camera_meta)
@@ -147,7 +149,7 @@ if __name__ == "__main__":
     ap.add_argument('-i', '--input', type=str, required=True, help='path to input video')
 
     ap.add_argument('-d', '--detector', type=str, required=False, default="prevframe_diff",
-                    help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn"])
+                    help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn", "yolo"])
 
     ap.add_argument('-t', '--tracker', type=str, required=False, default="kalman",
                     help="tracker to use", choices=["centroid", "kalman"])
