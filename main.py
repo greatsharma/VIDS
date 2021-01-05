@@ -3,7 +3,7 @@ import time
 import argparse
 import numpy as np
 
-import detectors
+from detectors import simple_detectors
 from camera_metadata import CAMERA_METADATA
 from trackers import centroid_tracker, kalman_tracker
 from utils import cv_utils, detector_utils, tracker_utils
@@ -52,9 +52,9 @@ class VehicleTracking(object):
         is_valid_cntrarea = detector_utils.init_adpative_cntrarea(self.camera_meta)
 
         if self.detector_type in ["prevframe_diff", "staticbg_diff"]:
-            self.detector = detectors.FrameDiffDetector(is_valid_cntrarea, self.detector_type, initial_frame)
+            self.detector = simple_detectors.FrameDiffDetector(is_valid_cntrarea, self.detector_type, initial_frame)
         else:
-            self.detector = detectors.BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
+            self.detector = simple_detectors.BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
 
     def _init_tracker(self):
         lane_detector = tracker_utils.init_lane_detector(self.camera_meta)
@@ -107,9 +107,8 @@ class VehicleTracking(object):
             frame_count += 1
 
             frame = cv2.resize(frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_AREA)
-            frame_gray = cv2.cvtColor(frame, code=cv2.COLOR_BGR2GRAY)
 
-            detections = self.detector.detect(frame_gray)
+            detections = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detections)
 
             self._draw_tracked_objects(frame, tracked_objects)
@@ -150,7 +149,7 @@ if __name__ == "__main__":
     ap.add_argument('-d', '--detector', type=str, required=False, default="prevframe_diff",
                     help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn"])
 
-    ap.add_argument('-t', '--tracker', type=str, required=False, default="centroid",
+    ap.add_argument('-t', '--tracker', type=str, required=False, default="kalman",
                     help="tracker to use", choices=["centroid", "kalman"])
 
     ap.add_argument('-bg', '--background', type=str, required=False,

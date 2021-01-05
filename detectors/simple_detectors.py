@@ -1,18 +1,8 @@
 import cv2
 import numpy as np
-from typing import Callable
 
 from utils import detector_utils
-
-
-class BaseDetector(object):
-
-    def __init__(self, is_valid_cntrarea: Callable, sub_type: str) -> None:
-        self.is_valid_cntrarea = is_valid_cntrarea
-        self.sub_type = sub_type
-
-    def detect(self, curr_frame: np.ndarray) -> list:
-        raise NotImplementedError("Function `detect` is not implemented !")
+from detectors.base_detector import BaseDetector
 
 
 class FrameDiffDetector(BaseDetector):
@@ -22,6 +12,7 @@ class FrameDiffDetector(BaseDetector):
         self.prev_frame = prev_frame
 
     def detect(self, curr_frame: np.ndarray) -> list:
+        curr_frame = cv2.cvtColor(curr_frame, code=cv2.COLOR_BGR2GRAY)
         frame_diff = cv2.absdiff(curr_frame, self.prev_frame)
 
         if self.sub_type == "prevframe_diff":
@@ -48,6 +39,7 @@ class BackgroundSubDetector(BaseDetector):
             self.bg_subtractor = cv2.createBackgroundSubtractorKNN(detectShadows=False)
 
     def detect(self, curr_frame: np.ndarray) -> list:
+        curr_frame = cv2.cvtColor(curr_frame, code=cv2.COLOR_BGR2GRAY)
         fgmask = self.bg_subtractor.apply(curr_frame)
         contours, _ = cv2.findContours(fgmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
