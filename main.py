@@ -3,10 +3,10 @@ import time
 import argparse
 import numpy as np
 
-from detectors import simple_detectors, yolo_detector
 from camera_metadata import CAMERA_METADATA
-from trackers import centroid_tracker, kalman_tracker
-from utils import cv_utils, detector_utils, tracker_utils
+from detectors import FrameDiffDetector, BackgroundSubDetector, YoloDetector
+from trackers import CentroidTracker, KalmanTracker
+from utils import draw_text_with_backgroud, init_adpative_cntrarea, init_lane_detector, init_direction_detector
 
 
 class VehicleTracking(object):
@@ -49,25 +49,25 @@ class VehicleTracking(object):
         initial_frame = cv2.resize(initial_frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_AREA)
         initial_frame = cv2.cvtColor(initial_frame, code=cv2.COLOR_BGR2GRAY)
 
-        is_valid_cntrarea = detector_utils.init_adpative_cntrarea(self.camera_meta)
+        is_valid_cntrarea = init_adpative_cntrarea(self.camera_meta)
 
         if self.detector_type in ["prevframe_diff", "staticbg_diff"]:
-            self.detector = simple_detectors.FrameDiffDetector(is_valid_cntrarea, self.detector_type, initial_frame)
+            self.detector = FrameDiffDetector(is_valid_cntrarea, self.detector_type, initial_frame)
         elif self.detector_type in ["mog", "mog2", "knn"]:
-            self.detector = simple_detectors.BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
+            self.detector = BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
         else:
-            self.detector = yolo_detector.YoloDetector(initial_frame)
+            self.detector = YoloDetector(initial_frame)
 
     def _init_tracker(self):
-        lane_detector = tracker_utils.init_lane_detector(self.camera_meta)
-        direction_detector = tracker_utils.init_direction_detector(self.camera_meta)
+        lane_detector = init_lane_detector(self.camera_meta)
+        direction_detector = init_direction_detector(self.camera_meta)
         maxdist = self.camera_meta["max_distance"]
 
         if self.tracker_type == "centroid":
-            self.tracker = centroid_tracker.CentroidTracker(
+            self.tracker = CentroidTracker(
                 lane_detector, direction_detector, maxdist, self.path_from_centroid, self.max_absent, self.max_track_pts)
         else:
-            self.tracker = kalman_tracker.KalmanTracker(
+            self.tracker = KalmanTracker(
                 lane_detector, direction_detector, maxdist, self.path_from_centroid, self.max_absent, self.max_track_pts)
 
     def _draw_tracked_objects(self, frame, tracked_objs):
@@ -84,11 +84,11 @@ class VehicleTracking(object):
             if obj.direction:
                 base_color = [0, 255, 0]
                 cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
-                cv_utils.draw_text_with_backgroud(frame, f"{obj.lane} lane", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.35, thickness=1)
+                draw_text_with_backgroud(frame, f"{obj.lane} lane", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.35, thickness=1)
             else:
                 base_color = [0, 0, 255]
                 cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
-                cv_utils.draw_text_with_backgroud(frame, "Wrong Direction", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.4, thickness=1, foreground=(0, 0, 255))
+                draw_text_with_backgroud(frame, "Wrong Direction", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.4, thickness=1, foreground=(0, 0, 255))
 
             prev_point = None
             for pt, perc, size in zip(obj.path, np.linspace(0.25, 0.75, len(obj.path)), [2]*10 + [3]*15 + [4]*15):
@@ -126,9 +126,9 @@ class VehicleTracking(object):
                 cv2.circle(frame, self.camera_meta["rightlane_ref"], radius=3, color=(0, 0, 255), thickness=-1)
                 cv2.circle(frame, self.camera_meta["mid_ref"], radius=4, color=(0, 0, 255), thickness=-1)
 
-            cv_utils.draw_text_with_backgroud(frame, f"Vehicle Tracking,   fps: {fps}", x=15, y=20, font_scale=0.5, thickness=1)
-            cv_utils.draw_text_with_backgroud(frame, f"Detector: {self.detector_type}", x=15, y=40, font_scale=0.5, thickness=1)
-            cv_utils.draw_text_with_backgroud(frame, f"Tracker: {self.tracker_type}", x=15, y=60, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(frame, f"Vehicle Tracking,   fps: {fps}", x=15, y=20, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(frame, f"Detector: {self.detector_type}", x=15, y=40, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(frame, f"Tracker: {self.tracker_type}", x=15, y=60, font_scale=0.5, thickness=1)
 
             cv2.imshow("output", frame)
 

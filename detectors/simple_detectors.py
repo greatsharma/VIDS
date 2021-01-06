@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from utils import detector_utils
-from detectors.base_detector import BaseDetector
+from utils import rects_from_contours
+from detectors import BaseDetector
 
 
 class FrameDiffDetector(BaseDetector):
@@ -23,7 +23,7 @@ class FrameDiffDetector(BaseDetector):
 
         contours, _ = cv2.findContours(frame_diff.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        return detector_utils.rects_from_contours(contours, self.is_valid_cntrarea)
+        return rects_from_contours(contours, self.is_valid_cntrarea)
 
 
 class BackgroundSubDetector(BaseDetector):
@@ -43,4 +43,4 @@ class BackgroundSubDetector(BaseDetector):
         fgmask = self.bg_subtractor.apply(curr_frame)
         contours, _ = cv2.findContours(fgmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        return detector_utils.rects_from_contours(contours, self.is_valid_cntrarea)
+        return rects_from_contours(contours, self.is_valid_cntrarea)

@@ -3,7 +3,7 @@ from scipy.spatial import distance
 from scipy.linalg import block_diag
 from scipy.optimize import linear_sum_assignment
 
-from trackers.base_tracker import BaseTracker
+from trackers import BaseTracker
 
 # time interval
 dt = 1.
@@ -103,11 +103,11 @@ class KalmanTracker(BaseTracker):
                     self._apply_kf(obj_id, detected_centroids[col])
                     self.objects[obj_id].rect = detections[col]
 
-                    if len(self.objects[obj_id].path) > 15:
+                    if len(self.objects[obj_id].path) > 5:
                         self.objects[obj_id].direction = self.direction_detector(
                             self.objects[obj_id].lane,
                             self.objects[obj_id].path[-1],
-                            self.objects[obj_id].path[-15]
+                            self.objects[obj_id].path[-5]
                         )
 
                     new_pt = (
