@@ -32,6 +32,7 @@ class VehicleTracking(object):
         self.mode = mode
         self.ll_ids = []
         self.rl_ids = []
+        self.wrongdir_ids = []
 
         camera_id = input_path[input_path.find("place")+5]
         self.camera_meta = CAMERA_METADATA[camera_id]
@@ -92,6 +93,20 @@ class VehicleTracking(object):
                 elif obj.lane == "right" and (not obj.objid in self.rl_ids):
                     self.rl_ids.append(obj.objid)
 
+    def _count_wrongdirection(self, tracked_objs):
+        mid_ref1 = self.camera_meta["mid_ref"][1] + 50
+        mid_ref2 = mid_ref1 + 50
+
+        for obj in tracked_objs.values():
+            obj_ctr = (
+                obj.centroid
+                if self.tracker_type == "centroid" else
+                obj.state[:2]
+            )
+
+            if not obj.direction and (obj_ctr[1] > mid_ref1 and obj_ctr[1] < mid_ref2) and (not obj.objid in self.wrongdir_ids):
+                self.wrongdir_ids.append(obj.objid)
+
     def run(self):
         frame_count = 0
         tik = time.time()
@@ -109,6 +124,7 @@ class VehicleTracking(object):
             tracked_objects = self.tracker.update(detections)
 
             self._count_vehicle(tracked_objects)
+            self._count_wrongdirection(tracked_objects)
             draw_tracked_objects(frame, tracked_objects, self.tracker_type)
 
             fps = frame_count // (time.time() - tik + 1e-6)
@@ -127,7 +143,8 @@ class VehicleTracking(object):
             draw_text_with_backgroud(self.img_for_text, f"Tracker: {self.tracker_type}", x=15, y=100, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"Left lane count: {len(self.ll_ids)}", x=15, y=140, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"Right lane count: {len(self.rl_ids)}", x=15, y=160, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=200, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Wrong lane count: {len(self.wrongdir_ids)}", x=15, y=180, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=220, font_scale=0.5, thickness=1)
 
             out_frame = np.hstack((frame, self.img_for_text))
             cv2.imshow("VIDS", out_frame)
@@ -151,7 +168,7 @@ if __name__ == "__main__":
     ap.add_argument('-d', '--detector', type=str, required=False, default="prevframe_diff",
                     help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn", "yolo"])
 
-    ap.add_argument('-t', '--tracker', type=str, required=False, default="kalman",
+    ap.add_argument('-t', '--tracker', type=str, required=False, default="centroid",
                     help="tracker to use", choices=["centroid", "kalman"])
 
     ap.add_argument('-bg', '--background', type=str, required=False,
