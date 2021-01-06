@@ -145,5 +145,6 @@ notebooks/
 inputs/
 outputs/
 reads/
+data/
 yolo_weights/
 TODO
