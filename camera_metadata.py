@@ -45,4 +45,15 @@ CAMERA_METADATA = {
         "mid_ref": (615, 175),
         "max_distance": 20,
     },
+
+    "5": {
+        "cntrarea_thresh1": 400,
+        "cntrarea_thresh2": 300,
+        "leftlane_coords": np.array([(400, 450), (850, 450), (850, 150), (100, 130), (50, 200)], dtype=np.int32).reshape((-1, 1, 2)),
+        "rightlane_coords": np.array([(850, 120), (850, 40), (150, 40), (100, 110)], dtype=np.int32).reshape((-1, 1, 2)),
+        "leftlane_ref": (850, 450),
+        "rightlane_ref": (125, 75),
+        "mid_ref": (375, 100),
+        "max_distance": 20,
+    },
 }
