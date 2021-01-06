@@ -58,6 +58,8 @@ class VehicleTracking(object):
         else:
             self.detector = YoloDetector(initial_frame)
 
+        self.img_for_text = np.zeros((self.frame_h, self.frame_w//3, 3), dtype=np.uint8)
+
     def _init_tracker(self):
         lane_detector = init_lane_detector(self.camera_meta)
         direction_detector = init_direction_detector(self.camera_meta)
@@ -122,15 +124,17 @@ class VehicleTracking(object):
                 cv2.polylines(frame, [self.camera_meta["leftlane_coords"]], isClosed=True, color=(255, 0, 0), thickness=2)
                 cv2.polylines(frame, [self.camera_meta["rightlane_coords"]], isClosed=True, color=(255, 0, 0), thickness=2)
                 # reference points
-                cv2.circle(frame, self.camera_meta["leftlane_ref"], radius=3, color=(0, 0, 255), thickness=-1)
-                cv2.circle(frame, self.camera_meta["rightlane_ref"], radius=3, color=(0, 0, 255), thickness=-1)
-                cv2.circle(frame, self.camera_meta["mid_ref"], radius=4, color=(0, 0, 255), thickness=-1)
+                cv2.circle(frame, self.camera_meta["leftlane_ref"], radius=2, color=(0, 0, 255), thickness=-1)
+                cv2.circle(frame, self.camera_meta["rightlane_ref"], radius=2, color=(0, 0, 255), thickness=-1)
+                cv2.circle(frame, self.camera_meta["mid_ref"], radius=2, color=(0, 0, 255), thickness=-1)
 
-            draw_text_with_backgroud(frame, f"Vehicle Tracking,   fps: {fps}", x=15, y=20, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(frame, f"Detector: {self.detector_type}", x=15, y=40, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(frame, f"Tracker: {self.tracker_type}", x=15, y=60, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, "VIDS", x=15, y=30, font_scale=1, thickness=2)
+            draw_text_with_backgroud(self.img_for_text, f"Detector: {self.detector_type}", x=15, y=60, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Tracker: {self.tracker_type}", x=15, y=80, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=100, font_scale=0.5, thickness=1)
 
-            cv2.imshow("output", frame)
+            out_frame = np.hstack((frame, self.img_for_text))
+            cv2.imshow("VIDS", out_frame)
 
             key = cv2.waitKey(1)
 
