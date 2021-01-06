@@ -30,8 +30,6 @@ class VehicleTracking(object):
         self.path_from_centroid = path_from_centroid
         self.max_absent = max_absent
         self.mode = mode
-        self.ll_count = 0
-        self.rl_count = 0
         self.ll_ids = []
         self.rl_ids = []
 
@@ -78,7 +76,8 @@ class VehicleTracking(object):
                 lane_detector, direction_detector, maxdist, self.path_from_centroid, self.max_absent, self.max_track_pts)
 
     def _count_vehicle(self, tracked_objs):
-        mid_ref = self.camera_meta["mid_ref"][1]
+        mid_ref1 = self.camera_meta["mid_ref"][1] + 50
+        mid_ref2 = mid_ref1 + 50
 
         for obj in tracked_objs.values():
             obj_ctr = (
@@ -87,12 +86,11 @@ class VehicleTracking(object):
                 obj.state[:2]
             )
 
-            if obj.lane == "left" and obj_ctr[1] < mid_ref and (not obj.objid in self.ll_ids):
-                self.ll_count += 1
-                self.ll_ids.append(obj.objid)
-            elif obj.lane == "right" and obj_ctr[1] > mid_ref and (not obj.objid in self.rl_ids):
-                self.rl_count += 1
-                self.rl_ids.append(obj.objid)
+            if (obj_ctr[1] > mid_ref1 and obj_ctr[1] < mid_ref2):
+                if obj.lane == "left" and (not obj.objid in self.ll_ids):
+                    self.ll_ids.append(obj.objid)
+                elif obj.lane == "right" and (not obj.objid in self.rl_ids):
+                    self.rl_ids.append(obj.objid)
 
     def run(self):
         frame_count = 0
@@ -127,8 +125,8 @@ class VehicleTracking(object):
             draw_text_with_backgroud(self.img_for_text, "VIDS", x=15, y=30, font_scale=1, thickness=2)
             draw_text_with_backgroud(self.img_for_text, f"Detector: {self.detector_type}", x=15, y=80, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"Tracker: {self.tracker_type}", x=15, y=100, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"Left lane count: {self.ll_count}", x=15, y=140, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"Right lane count: {self.rl_count}", x=15, y=160, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Left lane count: {len(self.ll_ids)}", x=15, y=140, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Right lane count: {len(self.rl_ids)}", x=15, y=160, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=200, font_scale=0.5, thickness=1)
 
             out_frame = np.hstack((frame, self.img_for_text))
