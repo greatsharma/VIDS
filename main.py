@@ -6,7 +6,8 @@ import numpy as np
 from camera_metadata import CAMERA_METADATA
 from detectors import FrameDiffDetector, BackgroundSubDetector, YoloDetector
 from trackers import CentroidTracker, KalmanTracker
-from utils import draw_text_with_backgroud, init_adpative_cntrarea, init_lane_detector, init_direction_detector
+from utils import draw_text_with_backgroud, draw_tracked_objects
+from utils import init_adpative_cntrarea, init_lane_detector, init_direction_detector
 
 
 class VehicleTracking(object):
@@ -76,33 +77,6 @@ class VehicleTracking(object):
             self.tracker = KalmanTracker(
                 lane_detector, direction_detector, maxdist, self.path_from_centroid, self.max_absent, self.max_track_pts)
 
-    def _draw_tracked_objects(self, frame, tracked_objs):
-        for obj in tracked_objs.values():
-            obj_rect = obj.rect
-            obj_ctr = (
-                obj.centroid
-                if self.tracker_type == "centroid" else
-                obj.state[:2]
-            )
-
-            cv2.circle(frame, obj_ctr, radius=3, color=(0, 0, 0), thickness=-1)
-
-            if obj.direction:
-                base_color = [0, 255, 0]
-                cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
-                draw_text_with_backgroud(frame, f"{obj.lane} lane", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.35, thickness=1)
-            else:
-                base_color = [0, 0, 255]
-                cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
-                draw_text_with_backgroud(frame, "Wrong Direction", obj_ctr[0]-10, obj_ctr[1]-10, font_scale=0.4, thickness=1, foreground=(0, 0, 255))
-
-            prev_point = None
-            for pt, perc, size in zip(obj.path, np.linspace(0.25, 0.75, len(obj.path)), [2]*10 + [3]*15 + [4]*15):
-                if not prev_point is None:
-                    color = tuple(np.array(base_color)*(1-perc))
-                    cv2.line(frame, (prev_point[0], prev_point[1]), (pt[0], pt[1]), color, thickness=size, lineType=8)
-                prev_point = pt
-
     def _count_vehicle(self, tracked_objs):
         mid_ref = self.camera_meta["mid_ref"][1]
 
@@ -137,7 +111,7 @@ class VehicleTracking(object):
             tracked_objects = self.tracker.update(detections)
 
             self._count_vehicle(tracked_objects)
-            self._draw_tracked_objects(frame, tracked_objects)
+            draw_tracked_objects(frame, tracked_objects, self.tracker_type)
 
             fps = frame_count // (time.time() - tik + 1e-6)
 
