@@ -103,11 +103,11 @@ class KalmanTracker(BaseTracker):
                     self._apply_kf(obj_id, detected_centroids[col])
                     self.objects[obj_id].rect = detections[col]
 
-                    if len(self.objects[obj_id].path) > 5:
+                    if len(self.objects[obj_id].path) > 15:
                         self.objects[obj_id].direction = self.direction_detector(
                             self.objects[obj_id].lane,
                             self.objects[obj_id].path[-1],
-                            self.objects[obj_id].path[-5]
+                            self.objects[obj_id].path[-15]
                         )
 
                     new_pt = (

@@ -38,10 +38,10 @@ CAMERA_METADATA = {
     "4": {
         "cntrarea_thresh1": 400,
         "cntrarea_thresh2": 200,
-        "leftlane_coords": np.array([(120, 400), (560, 400), (615, 90), (540, 90)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(640, 400), (940, 400), (960, 300), (680, 90), (620, 90)], dtype=np.int32).reshape((-1, 1, 2)),
+        "leftlane_coords": np.array([(120, 400), (560, 400), (615, 110), (520, 110)], dtype=np.int32).reshape((-1, 1, 2)),
+        "rightlane_coords": np.array([(640, 400), (940, 400), (960, 300), (700, 110), (620, 110)], dtype=np.int32).reshape((-1, 1, 2)),
         "leftlane_ref": (340, 400),
-        "rightlane_ref": (650, 90),
+        "rightlane_ref": (660, 110),
         "mid_ref": (615, 175),
         "max_distance": 20,
     },
