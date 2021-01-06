@@ -29,6 +29,10 @@ class VehicleTracking(object):
         self.path_from_centroid = path_from_centroid
         self.max_absent = max_absent
         self.mode = mode
+        self.ll_count = 0
+        self.rl_count = 0
+        self.ll_ids = []
+        self.rl_ids = []
 
         camera_id = input_path[input_path.find("place")+5]
         self.camera_meta = CAMERA_METADATA[camera_id]
@@ -99,6 +103,23 @@ class VehicleTracking(object):
                     cv2.line(frame, (prev_point[0], prev_point[1]), (pt[0], pt[1]), color, thickness=size, lineType=8)
                 prev_point = pt
 
+    def _count_vehicle(self, tracked_objs):
+        mid_ref = self.camera_meta["mid_ref"][1]
+
+        for obj in tracked_objs.values():
+            obj_ctr = (
+                obj.centroid
+                if self.tracker_type == "centroid" else
+                obj.state[:2]
+            )
+
+            if obj.lane == "left" and obj_ctr[1] < mid_ref and (not obj.objid in self.ll_ids):
+                self.ll_count += 1
+                self.ll_ids.append(obj.objid)
+            elif obj.lane == "right" and obj_ctr[1] > mid_ref and (not obj.objid in self.rl_ids):
+                self.rl_count += 1
+                self.rl_ids.append(obj.objid)
+
     def run(self):
         frame_count = 0
         tik = time.time()
@@ -115,6 +136,7 @@ class VehicleTracking(object):
             detections = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detections)
 
+            self._count_vehicle(tracked_objects)
             self._draw_tracked_objects(frame, tracked_objects)
 
             fps = frame_count // (time.time() - tik + 1e-6)
@@ -129,9 +151,11 @@ class VehicleTracking(object):
                 cv2.circle(frame, self.camera_meta["mid_ref"], radius=2, color=(0, 0, 255), thickness=-1)
 
             draw_text_with_backgroud(self.img_for_text, "VIDS", x=15, y=30, font_scale=1, thickness=2)
-            draw_text_with_backgroud(self.img_for_text, f"Detector: {self.detector_type}", x=15, y=60, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"Tracker: {self.tracker_type}", x=15, y=80, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=100, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Detector: {self.detector_type}", x=15, y=80, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Tracker: {self.tracker_type}", x=15, y=100, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Left lane count: {self.ll_count}", x=15, y=140, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Right lane count: {self.rl_count}", x=15, y=160, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=200, font_scale=0.5, thickness=1)
 
             out_frame = np.hstack((frame, self.img_for_text))
             cv2.imshow("VIDS", out_frame)

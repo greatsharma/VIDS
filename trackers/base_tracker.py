@@ -5,7 +5,8 @@ from collections import deque, OrderedDict
 
 class VehicleObject(object):
 
-    def __init__(self, centroid, rect, lane, direction, path, absent_count) -> None:
+    def __init__(self, objid, centroid, rect, lane, direction, path, absent_count) -> None:
+        self.objid = objid
         self.centroid = centroid
         self.rect = rect
         self.lane = lane
@@ -47,7 +48,8 @@ class BaseTracker(object):
             self.next_objid -= 1
             return
 
-        self.objects[self.next_objid] = VehicleObject(centroid, rect, lane, True, deque([]), 0)
+        objid = lane + "_" + str(self.next_objid)
+        self.objects[self.next_objid] = VehicleObject(objid, centroid, rect, lane, True, deque([]), 0)
 
         pt = centroid
         if not self.path_from_centroid:
