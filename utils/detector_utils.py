@@ -65,7 +65,7 @@ def rects_from_contours(contours: list, is_valid_cntrarea: float, iou_thresh=0.3
 def init_adpative_cntrarea(camera_meta: dict) -> Callable:
     cntrarea_thresh1 = camera_meta["cntrarea_thresh1"]
     cntrarea_thresh2 = camera_meta["cntrarea_thresh2"]
-    mid_ref = camera_meta["mid_ref"]
+    mid_ref = camera_meta["mid_refs"][0]
 
     def is_valid_cntr(x1, y1, x2, y2):
         cntr_area = (x2-x1) * (y2-y1)

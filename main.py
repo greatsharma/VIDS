@@ -37,6 +37,9 @@ class VehicleTracking(object):
         camera_id = input_path[input_path.find("place")+5]
         self.camera_meta = CAMERA_METADATA[camera_id]
 
+        self.mid_ref1 = self.camera_meta["mid_refs"][1][1]
+        self.mid_ref2 = self.camera_meta["mid_refs"][2][1]
+
         self.vidcap = cv2.VideoCapture(input_path)
 
         self._init_detector()
@@ -77,9 +80,6 @@ class VehicleTracking(object):
                 lane_detector, direction_detector, maxdist, self.path_from_centroid, self.max_absent, self.max_track_pts)
 
     def _count_vehicle(self, tracked_objs):
-        mid_ref1 = self.camera_meta["mid_ref"][1] + 50
-        mid_ref2 = mid_ref1 + 50
-
         for obj in tracked_objs.values():
             obj_ctr = (
                 obj.centroid
@@ -87,16 +87,13 @@ class VehicleTracking(object):
                 obj.state[:2]
             )
 
-            if (obj_ctr[1] > mid_ref1 and obj_ctr[1] < mid_ref2):
+            if (obj_ctr[1] > self.mid_ref1 and obj_ctr[1] < self.mid_ref2):
                 if obj.lane == "left" and (not obj.objid in self.ll_ids):
                     self.ll_ids.append(obj.objid)
                 elif obj.lane == "right" and (not obj.objid in self.rl_ids):
                     self.rl_ids.append(obj.objid)
 
     def _count_wrongdirection(self, tracked_objs):
-        mid_ref1 = self.camera_meta["mid_ref"][1] + 50
-        mid_ref2 = mid_ref1 + 50
-
         for obj in tracked_objs.values():
             obj_ctr = (
                 obj.centroid
@@ -104,7 +101,7 @@ class VehicleTracking(object):
                 obj.state[:2]
             )
 
-            if not obj.direction and (obj_ctr[1] > mid_ref1 and obj_ctr[1] < mid_ref2) and (not obj.objid in self.wrongdir_ids):
+            if not obj.direction and (obj_ctr[1] > self.mid_ref1 and obj_ctr[1] < self.mid_ref2) and (not obj.objid in self.wrongdir_ids):
                 self.wrongdir_ids.append(obj.objid)
 
     def run(self):
@@ -136,7 +133,7 @@ class VehicleTracking(object):
                 # reference points
                 cv2.circle(frame, self.camera_meta["leftlane_ref"], radius=2, color=(0, 0, 255), thickness=-1)
                 cv2.circle(frame, self.camera_meta["rightlane_ref"], radius=2, color=(0, 0, 255), thickness=-1)
-                cv2.circle(frame, self.camera_meta["mid_ref"], radius=2, color=(0, 0, 255), thickness=-1)
+                cv2.circle(frame, self.camera_meta["mid_refs"][0], radius=2, color=(0, 0, 255), thickness=-1)
 
             draw_text_with_backgroud(self.img_for_text, "VIDS", x=15, y=30, font_scale=1, thickness=2)
             draw_text_with_backgroud(self.img_for_text, f"Detector: {self.detector_type}", x=15, y=80, font_scale=0.5, thickness=1)
