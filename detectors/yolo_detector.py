@@ -12,6 +12,11 @@ class YoloDetector(BaseDetector):
     def __init__(self, initial_frame: np.ndarray, yolo_weight, is_valid_cntrarea=None, sub_type=None) -> None:
         super().__init__(is_valid_cntrarea, sub_type)
 
+        if yolo_weight == "coco_pretrained":
+            self.objects_of_interests = ["tw", "car", "lgv", "bus", "ml", "auto", "mb", "tractr", "2t", "3t", "4t", "5t", "6t"]
+        else:
+            self.objects_of_interests = ["bicycle", "car", "motorbike", "bus", "truck"]
+
         base_path = f"detectors/yolo_weights/{yolo_weight}/"
 
         config_path = base_path + "yolov4.cfg"
@@ -72,7 +77,7 @@ class YoloDetector(BaseDetector):
         rects = []
         for obj_class, obj_prob, obj_bbox in detections:
             obj_class = str(obj_class.decode())
-            if obj_class in ["bicycle", "car", "motorbike", "bus", "truck"]:
+            if obj_class in self.objects_of_interests:
                 rects.append(self._bbox2rect(obj_bbox))
 
         return rects
