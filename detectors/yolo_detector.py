@@ -9,18 +9,20 @@ from detectors import BaseDetector
 
 class YoloDetector(BaseDetector):
 
-    def __init__(self, initial_frame: np.ndarray, is_valid_cntrarea=None, sub_type=None) -> None:
+    def __init__(self, initial_frame: np.ndarray, yolo_weight, is_valid_cntrarea=None, sub_type=None) -> None:
         super().__init__(is_valid_cntrarea, sub_type)
 
-        config_path = "D:/darknet/build/darknet/x64/cfg/yolov4.cfg"
+        base_path = f"detectors/yolo_weights/{yolo_weight}/"
+
+        config_path = base_path + "yolov4.cfg"
         if not os.path.exists(config_path):
             raise ValueError("Invalid config path `" + os.path.abspath(config_path)+"`")
 
-        weight_path = "D:/darknet/build/darknet/x64/yolov4.weights"
+        weight_path = base_path + "yolov4.weights"
         if not os.path.exists(weight_path):
             raise ValueError("Invalid weight path `" + os.path.abspath(weight_path)+"`")
 
-        meta_path = "D:/darknet/build/darknet/x64/cfg/coco.data"
+        meta_path = base_path + "obj.data"
         if not os.path.exists(meta_path):
             raise ValueError("Invalid data file path `" + os.path.abspath(meta_path)+"`")
 

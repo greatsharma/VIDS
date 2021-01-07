@@ -16,6 +16,7 @@ class VehicleTracking(object):
             self,
             input_path,
             detector_type,
+            yolo_weight,
             tracker_type,
             bg_path,
             max_track_pts,
@@ -24,6 +25,7 @@ class VehicleTracking(object):
             mode):
 
         self.detector_type = detector_type
+        self.yolo_weight = yolo_weight
         self.tracker_type = tracker_type
         self.bg_path = bg_path
         self.max_track_pts = max_track_pts
@@ -63,7 +65,7 @@ class VehicleTracking(object):
         elif self.detector_type in ["mog", "mog2", "knn"]:
             self.detector = BackgroundSubDetector(is_valid_cntrarea, self.detector_type)
         else:
-            self.detector = YoloDetector(initial_frame)
+            self.detector = YoloDetector(initial_frame, self.yolo_weight)
 
         self.img_for_text = np.zeros((self.frame_h, self.frame_w//3, 3), dtype=np.uint8)
 
@@ -165,6 +167,9 @@ if __name__ == "__main__":
     ap.add_argument('-d', '--detector', type=str, required=False, default="prevframe_diff",
                     help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn", "yolo"])
 
+    ap.add_argument('-yw', '--yolo_weight', type=str, required=False, default="coco_pretrained",
+                    help="yolo weights to use", choices=["coco_pretrained", "2020_12_29__ff"])
+
     ap.add_argument('-t', '--tracker', type=str, required=False, default="centroid",
                     help="tracker to use", choices=["centroid", "kalman"])
 
@@ -188,6 +193,7 @@ if __name__ == "__main__":
     vt_obj = VehicleTracking(
         args["input"],
         args["detector"],
+        args["yolo_weight"],
         args["tracker"],
         args["background"],
         args["max_track_points"],
