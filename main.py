@@ -15,6 +15,7 @@ class VehicleTracking(object):
     def __init__(
             self,
             input_path,
+            resize,
             detector_type,
             yolo_weight,
             tracker_type,
@@ -24,6 +25,7 @@ class VehicleTracking(object):
             max_absent,
             mode):
 
+        self.resize = resize
         self.detector_type = detector_type
         self.yolo_weight = yolo_weight
         self.tracker_type = tracker_type
@@ -54,8 +56,12 @@ class VehicleTracking(object):
         else:
             _, initial_frame = self.vidcap.read()
 
-        self.frame_h, self.frame_w = tuple(d//2 for d in initial_frame.shape[:2])
-        initial_frame = cv2.resize(initial_frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_AREA)
+        if self.resize[0] <= 1:
+            self.frame_h, self.frame_w = tuple(int(d * s) for d, s in zip(initial_frame.shape[:2], self.resize))
+        else:
+            self.frame_h, self.frame_w = self.resize
+
+        initial_frame = cv2.resize(initial_frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_LINEAR)
         initial_frame = cv2.cvtColor(initial_frame, code=cv2.COLOR_BGR2GRAY)
 
         is_valid_cntrarea = init_adpative_cntrarea(self.camera_meta)
@@ -117,7 +123,7 @@ class VehicleTracking(object):
 
             frame_count += 1
 
-            frame = cv2.resize(frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_AREA)
+            frame = cv2.resize(frame, dsize=(self.frame_w, self.frame_h), interpolation=cv2.INTER_LINEAR)
 
             detections = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detections)
@@ -164,6 +170,9 @@ if __name__ == "__main__":
 
     ap.add_argument('-i', '--input', type=str, required=True, help='path to input video')
 
+    ap.add_argument('-r', '--resize', nargs="+", type=int, required=False, default=[0.5, 0.5],
+                    help="resize factor/shape of image")
+
     ap.add_argument('-d', '--detector', type=str, required=False, default="prevframe_diff",
                     help="detector to use", choices=["prevframe_diff", "staticbg_diff", "mog", "mog2", "knn", "yolo"])
 
@@ -192,6 +201,7 @@ if __name__ == "__main__":
 
     vt_obj = VehicleTracking(
         args["input"],
+        args["resize"],
         args["detector"],
         args["yolo_weight"],
         args["tracker"],

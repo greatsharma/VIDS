@@ -13,9 +13,9 @@ class YoloDetector(BaseDetector):
         super().__init__(is_valid_cntrarea, sub_type)
 
         if yolo_weight == "coco_pretrained":
-            self.objects_of_interests = ["tw", "car", "lgv", "bus", "ml", "auto", "mb", "tractr", "2t", "3t", "4t", "5t", "6t"]
-        else:
             self.objects_of_interests = ["bicycle", "car", "motorbike", "bus", "truck"]
+        else:
+            self.objects_of_interests = ["tw", "car", "lgv", "bus", "ml", "auto", "mb", "tractr", "2t", "3t", "4t", "5t", "6t"]
 
         base_path = f"detectors/yolo_weights/{yolo_weight}/"
 
@@ -56,11 +56,24 @@ class YoloDetector(BaseDetector):
             pass
 
         # Create an image we reuse for each detect
-        frame_height, frame_width = initial_frame.shape
-        self.darknet_image = darknet.make_image(frame_width, frame_height, 3)  # Create image according darknet for compatibility of network
+        self.darknet_image = darknet.make_image(darknet.network_width(self.net_main), darknet.network_height(self.net_main), 3)
 
-    def _bbox2rect(self, bbox):
-        x, y, w, h = bbox
+        self.frame_h, self.frame_w = initial_frame.shape[:2]
+
+        self.yolo_width = None
+        self.yolo_height = None
+
+        cfg_file = open(config_path, "r")
+        for line in cfg_file.readlines():
+            if self.yolo_width is None or self.yolo_height is None:
+                if 'width=' in line:
+                    self.yolo_width = int(line.split('=', 1)[1])
+                elif 'height=' in line:
+                    self.yolo_height = int(line.split('=', 1)[1])
+            else:
+                break
+
+    def _bbox2rect(self, x, y, w, h):
         xmin = int(round(x - (w / 2)))
         xmax = int(round(x + (w / 2)))
         ymin = int(round(y - (h / 2)))
@@ -69,15 +82,20 @@ class YoloDetector(BaseDetector):
 
     def detect(self, curr_frame: np.ndarray) -> list:
         curr_frame = cv2.cvtColor(curr_frame, code=cv2.COLOR_BGR2RGB)
+        curr_frame = cv2.resize(curr_frame, (darknet.network_width(self.net_main), darknet.network_height(self.net_main)), interpolation=cv2.INTER_LINEAR)
 
         darknet.copy_image_from_bytes(self.darknet_image, curr_frame.tobytes())
 
-        detections = darknet.detect_image(self.net_main, self.meta_main, self.darknet_image, thresh=0.3)
+        detections = darknet.detect_image(self.net_main, self.meta_main, self.darknet_image, thresh=0.25)
 
         rects = []
-        for obj_class, obj_prob, obj_bbox in detections:
+        for obj_class, _, obj_bbox in detections:
             obj_class = str(obj_class.decode())
             if obj_class in self.objects_of_interests:
-                rects.append(self._bbox2rect(obj_bbox))
+                x = obj_bbox[0] * self.frame_w / self.yolo_width
+                y = obj_bbox[1] * self.frame_h / self.yolo_height
+                w = obj_bbox[2] * self.frame_w / self.yolo_width
+                h = obj_bbox[3] * self.frame_h / self.yolo_height
+                rects.append(self._bbox2rect(x, y, w, h))
 
         return rects
