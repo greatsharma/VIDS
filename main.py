@@ -149,7 +149,8 @@ class VehicleTracking(object):
             draw_text_with_backgroud(self.img_for_text, f"Left lane count: {len(self.ll_ids)}", x=15, y=140, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"Right lane count: {len(self.rl_ids)}", x=15, y=160, font_scale=0.5, thickness=1)
             draw_text_with_backgroud(self.img_for_text, f"Wrong lane count: {len(self.wrongdir_ids)}", x=15, y=180, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=220, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Frame count: {frame_count}", x=15, y=220, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=240, font_scale=0.5, thickness=1)
 
             out_frame = np.hstack((frame, self.img_for_text))
             cv2.imshow("VIDS", out_frame)
