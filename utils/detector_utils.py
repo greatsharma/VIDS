@@ -2,23 +2,41 @@ import cv2
 from typing import Callable
 
 
-def intersection_over_union(rect1: list, rect2: list) -> float:
-    intersection_x1 = max(rect1[0], rect2[0])
-    intersection_y1 = max(rect1[1], rect2[1])
-    intersection_x2 = min(rect1[2], rect2[2])
-    intersection_y2 = min(rect1[3], rect2[3])
+def init_lane_detector(camera_meta: dict) -> Callable:
+    lane1_coords = camera_meta["lane1"]["lane_coords"]
+    lane2_coords = camera_meta["lane2"]["lane_coords"]
+    lane3_coords = camera_meta["lane3"]["lane_coords"]
+    lane4_coords = camera_meta["lane4"]["lane_coords"]
 
-    rect1_area = (rect1[2]-rect1[0]) * (rect1[3]-rect1[1])
-    rect2_area = (rect2[2]-rect2[0]) * (rect2[3]-rect2[1])
-    intersection_area = min((intersection_x2-intersection_x1), 0) * min((intersection_y2-intersection_y1), 0)
+    def lane_detector(pt):
+        if cv2.pointPolygonTest(lane1_coords, pt, False) == 1:
+            return "1"
+        elif cv2.pointPolygonTest(lane2_coords, pt, False) == 1:
+            return "2"
+        elif cv2.pointPolygonTest(lane3_coords, pt, False) == 1:
+            return "3"
+        elif cv2.pointPolygonTest(lane4_coords, pt, False) == 1:
+            return "4"
+        else:
+            return None
 
-    return intersection_area / (rect1_area + rect2_area - intersection_area + 1e-7)
+    return lane_detector
 
 
-def intersection_over_rect(rect1: list, rect2: list) -> float:
-    # finds ratio of intersection and rect2 (which is smaller in our case)
+def intersection_over_rect(rect1, rect2):
+    if (rect1[2] - rect1[0]) * (rect1[3] - rect1[1]) < (rect2[2] - rect2[0]) * (
+        rect2[3] - rect2[1]
+    ):
+        rect1, rect2 = rect2, rect1
 
-    if (rect2[0] >= rect1[0]) and (rect2[1] >= rect1[1]) and (rect2[2] <= rect1[2]) and (rect2[3] <= rect1[3]):
+    # finds ratio of intersection and rect2 (which is smaller)
+
+    if (
+        (rect2[0] >= rect1[0])
+        and (rect2[1] >= rect1[1])
+        and (rect2[2] <= rect1[2])
+        and (rect2[3] <= rect1[3])
+    ):
         # if rect2 is completely inside rect1
         return 1
     else:
@@ -27,53 +45,53 @@ def intersection_over_rect(rect1: list, rect2: list) -> float:
         intersection_x2 = min(rect1[2], rect2[2])
         intersection_y2 = min(rect1[3], rect2[3])
 
-        rect2_area = (rect2[2]-rect2[0]) * (rect2[3]-rect2[1])
-        intersection_area = min((intersection_x2-intersection_x1), 0) * min((intersection_y2-intersection_y1), 0)
+        rect2_area = (rect2[2] - rect2[0]) * (rect2[3] - rect2[1])
 
-        return intersection_area / (rect2_area + 1e-7)
-
-
-def nonmax_suppression(rects: list, iou_thresh=0.3) -> list:
-    nms_rects = []
-    rects = sorted(rects, key=lambda x: (x[2]-x[0])*(x[3]-x[1]), reverse=True)
-
-    while rects:
-        parent_rect = rects.pop(0)
-
-        idx = 0
-        for rect in rects:
-            if intersection_over_rect(parent_rect, rect) > 0.8 or intersection_over_union(parent_rect, rect) > iou_thresh:
-                rects.pop(idx)
-            idx += 1
-
-        nms_rects.append(parent_rect)
-
-    return nms_rects
-
-
-def rects_from_contours(contours: list, is_valid_cntrarea: float, iou_thresh=0.3) -> list:
-    rects = []
-    for cntr in contours:
-        x, y, w, h = cv2.boundingRect(cntr)
-        x1, y1, x2, y2 = x, y, x+w, y+h
-        if is_valid_cntrarea(x1, y1, x2, y2):
-            rects.append((x1, y1, x2, y2))
-
-    return nonmax_suppression(rects, iou_thresh)
-
-
-def init_adpative_cntrarea(camera_meta: dict) -> Callable:
-    cntrarea_thresh1 = camera_meta["cntrarea_thresh1"]
-    cntrarea_thresh2 = camera_meta["cntrarea_thresh2"]
-    mid_ref = camera_meta["mid_refs"][0]
-
-    def is_valid_cntr(x1, y1, x2, y2):
-        cntr_area = (x2-x1) * (y2-y1)
-        centroid = (x1+x2)//2, (y1+y2)//2
-
-        return (
-            cntr_area >= cntrarea_thresh1 and centroid[1] > mid_ref[1] or
-            cntr_area >= cntrarea_thresh2 and centroid[1] <= mid_ref[1]
+        intersection_area = max((intersection_x2 - intersection_x1), 0) * max(
+            (intersection_y2 - intersection_y1), 0
         )
 
-    return is_valid_cntr
+        return intersection_area / (rect2_area)
+
+
+def intersection_over_union(rect1: list, rect2: list) -> float:
+    intersection_x1 = max(rect1[0], rect2[0])
+    intersection_y1 = max(rect1[1], rect2[1])
+    intersection_x2 = min(rect1[2], rect2[2])
+    intersection_y2 = min(rect1[3], rect2[3])
+
+    intersection_area = max((intersection_x2 - intersection_x1), 0) * max(
+        (intersection_y2 - intersection_y1), 0
+    )
+
+    if intersection_area == 0:
+        return 0
+
+    rect1_area = abs((rect1[2] - rect1[0]) * (rect1[3] - rect1[1]))
+    rect2_area = abs((rect2[2] - rect2[0]) * (rect2[3] - rect2[1]))
+
+    return intersection_area / (rect1_area + rect2_area - intersection_area + 1e-6)
+
+
+def nonmax_suppression(detection_list: list, iou_thresh: float) -> list:
+    nms_detection_list = []
+
+    detection_list = sorted(
+        detection_list, key=lambda x: x["obj_class"][1], reverse=True
+    )
+
+    while detection_list:
+        detection = detection_list.pop(0)
+        parent_rect = detection["rect"]
+
+        keep = []
+        for det in detection_list:
+            rect = det["rect"]
+
+            if intersection_over_union(parent_rect, rect) < iou_thresh:
+                keep.append(det)
+
+        detection_list = keep
+        nms_detection_list.append(detection)
+
+    return nms_detection_list

@@ -1,31 +1,39 @@
-import cv2
 from typing import Callable
 from scipy.spatial import distance
 
 
-def init_lane_detector(camera_meta: dict) -> Callable:
-    leftlane_coords = camera_meta["leftlane_coords"]
-    rightlane_coords = camera_meta["rightlane_coords"]
+def init_classupdate_line(camera_meta: dict) -> Callable:
+    (Ax, Ay), (Bx, By) = camera_meta["classupdate_line"]
 
-    def lane_detector(centroid):
-        if cv2.pointPolygonTest(leftlane_coords, centroid, False) == 1:
-            return "left"
-        elif cv2.pointPolygonTest(rightlane_coords, centroid, False) == 1:
-            return "right"
-        else:
-            return None
+    def within_interval(pt):
+        return (pt[0] - Ax) * (By - Ay) - (pt[1] - Ay) * (Bx - Ax)
 
-    return lane_detector
+    return within_interval
 
 
 def init_direction_detector(camera_meta: dict) -> Callable:
-    leftlane_ref = camera_meta["leftlane_ref"]
-    rightlane_ref = camera_meta["rightlane_ref"]
+    lane1_ref = camera_meta["lane1"]["lane_ref"]
+    lane2_ref = camera_meta["lane2"]["lane_ref"]
+    lane3_ref = camera_meta["lane3"]["lane_ref"]
+    lane4_ref = camera_meta["lane4"]["lane_ref"]
 
     def direction_detector(lane, pt1, pt2):
-        if lane == "left":
-            return distance.euclidean(pt1, leftlane_ref) > distance.euclidean(pt2, leftlane_ref)
+        if lane == "1":
+            return distance.euclidean(pt1, lane1_ref) > distance.euclidean(
+                pt2, lane1_ref
+            )
+
+        elif lane == "2":
+            return distance.euclidean(pt1, lane2_ref) > distance.euclidean(
+                pt2, lane2_ref
+            )
+        elif lane == "3":
+            return distance.euclidean(pt1, lane3_ref) > distance.euclidean(
+                pt2, lane3_ref
+            )
         else:
-            return distance.euclidean(pt1, rightlane_ref) > distance.euclidean(pt2, rightlane_ref)
+            return distance.euclidean(pt1, lane4_ref) > distance.euclidean(
+                pt2, lane4_ref
+            )
 
     return direction_detector
