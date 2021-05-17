@@ -1,95 +1,153 @@
+import math
 import numpy as np
 from scipy.spatial import distance
 from scipy.linalg import block_diag
-from scipy.optimize import linear_sum_assignment
 
 from trackers import BaseTracker
 
 # time interval
-dt = 1.
-
-# change in state due external forces
-u = np.zeros((4, 1))
+dt = 1.0
 
 I = np.identity(4)
 
+u = np.zeros((4, 1))
+
 # state transition matrix assuming constant velocity model
 # new_pos = old_pos + velocity * dt
-F = np.matrix([[1., 0., dt, 0.],
-               [0., 1., 0., dt],
-               [0., 0., 1., 0.],
-               [0., 0., 0., 1.]])
+F = np.matrix(
+    [
+        [1.0, dt, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, dt],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+)
 
 # measurement function (maps the states to measurements)
-H = np.matrix([[1., 0., 0., 0.],
-               [0., 1., 0., 0.]])
+H = np.matrix([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
 
 # measurement noise covariance (measurement is done only for position not velocity)
-R = np.matrix([[0.01, 0.],
-               [0., 0.01]])
+R = np.matrix([[5, 0.0], [0.0, 5]])
 
 # Q is process covariance
-Q_comp_mat = np.array([[dt**4/2., dt**3/2.],
-                       [dt**3/2., dt**2]])
+Q_comp_mat = np.array([[dt ** 4 / 4.0, dt ** 3 / 2.0], [dt ** 3 / 2.0, dt ** 2]])
 Q = block_diag(Q_comp_mat, Q_comp_mat)
 
 
 class KalmanTracker(BaseTracker):
-
-    def _apply_kf(self, obj_id, z):
+    def _apply_kf(self, obj_id, z, lost=False):
         global dt, u, I, F, H, R, Q
 
         x = self.objects[obj_id].state
         x = np.array([x]).T
+        x = x.astype(float)
 
-        # prediction steps
-        x = F * x + u  # updating state, x' = x + v.dt + u
-        self.objects[obj_id].P = F * self.objects[obj_id].P * F.T + Q
+        if z is None:
 
-        if not z is None:
+            # updating state, x' = x + v.dt + u
+            x = F * x  # + u
+            x = tuple(x.astype(int).ravel().tolist()[0])
+
+            if lost and self.objects[obj_id].direction:
+                x = list(x)
+
+                objlane = self.objects[obj_id].lane
+                objcls = self.objects[obj_id].obj_class[0]
+
+                # mx = self.velocity_regression[objlane][objcls][0][0]
+                # my = self.velocity_regression[objlane][objcls][1][0]
+                # cx = self.velocity_regression[objlane][objcls][0][1]
+                # cy = self.velocity_regression[objlane][objcls][1][1]
+                # x[1] = mx * x[0] + cx
+                # x[3] = my * x[2] + cy
+
+                pt1 = [
+                    self.objects[obj_id].lastdetected_state[0],
+                    -self.objects[obj_id].lastdetected_state[2],
+                ]
+                pt2 = [x[0], -x[2]]
+                angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
+                angle = self.lane_angles[objlane] - angle
+
+                c = math.cos(angle)
+                s = math.sin(angle)
+                pt2[0] -= pt1[0]
+                pt2[1] -= pt1[1]
+
+                x[0] = int(pt1[0] + c * pt2[0] - s * pt2[1])
+                x[2] = -int(pt1[1] + s * pt2[0] + c * pt2[1])
+
+                x = tuple(x)
+
+            self.objects[obj_id].P = F * self.objects[obj_id].P * F.T + Q
+            self.objects[obj_id].state = x
+
+        else:
             P_ = self.objects[obj_id].P
-            # measurement steps
+
             z = np.array(z)
             z = z.reshape(1, 2)
+
             e = z.T - H * x
-            S = H * P_ * H.T + R
-            K = P_ * H.T * np.linalg.inv(S)
-            x += K*e
-            self.objects[obj_id].P = (I - K * H) * P_
 
-        x = x.astype(int).ravel().tolist()
-        self.objects[obj_id].state = tuple(x[0])
+            PHT = P_ * H.T
 
-    def update(self, detections: list):
-        if len(detections) == 0:
+            S = H * PHT + R
+
+            K = PHT * np.linalg.inv(S)
+
+            x += K * e
+
+            IKH = I - K * H
+
+            self.objects[obj_id].P = (IKH * P_ * IKH.T) + (K * R * K.T)
+
+            x = tuple(x.astype(int).ravel().tolist())
+            self.objects[obj_id].state = x
+
+    def update(self, detection_list: list):
+        if len(detection_list) == 0:
+            to_deregister = []
+
             for obj_id, obj in self.objects.items():
                 obj.absent_count += 1
-                self._apply_kf(obj_id, None)
+                self._apply_kf(obj_id, None, lost=True)
+                self.objects[obj_id].path.append(
+                    (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                )
+
+                self._update_eos(obj_id, lost=True)
 
                 if obj.absent_count > self.max_absent:
-                    self._deregister_object(obj_id)
+                    to_deregister.append(obj_id)
+
+            for obj_id in to_deregister:
+                self._deregister_object(obj_id)
 
             return self.objects
 
-        detected_centroids = np.zeros((len(detections), 2), dtype="int")
-
-        for (i, (x1, y1, x2, y2)) in enumerate(detections):
-            detected_centroids[i] = (x1+x2)//2, (y1+y2)//2
-
         if len(self.objects) == 0:
-            for ctr, rect in zip(detected_centroids, detections):
-                i_count = self.next_objid
-                self._register_object(tuple(ctr), rect)
-                if self.next_objid > i_count:
-                    self._apply_kf(self.next_objid, ctr)
+            for det in detection_list:
+                self._register_object(det)
+                self._apply_kf(self.next_objid, det["obj_bottom"])
+                self.objects[self.next_objid].lastdetected_state = self.objects[
+                    self.next_objid
+                ].state
         else:
             obj_ids = list(self.objects.keys())
-            obj_centroids = [self.objects[obj_id].state[:2] for obj_id in obj_ids]
+            obj_bottoms = [
+                (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                for obj_id in obj_ids
+            ]
 
-            D = distance.cdist(np.array(obj_centroids), detected_centroids)
+            detected_rects = [det["rect"] for det in detection_list]
+            detected_bottoms = [det["obj_bottom"] for det in detection_list]
+            detected_classes = [det["obj_class"] for det in detection_list]
 
-            rows, cols = linear_sum_assignment(D)
-            rows, cols = rows.tolist(), cols.tolist()
+            D = distance.cdist(np.array(obj_bottoms), detected_bottoms)
+
+            rows = D.min(axis=1).argsort()
+            cols = D.argmin(axis=1)[rows]
 
             used_rows = set()
             used_cols = set()
@@ -98,29 +156,32 @@ class KalmanTracker(BaseTracker):
                 if row in used_rows or col in used_cols:
                     continue
 
-                if D[row][col] <= self.maxdist:
+                if self._within_eos(obj_ids[row], detected_bottoms[col]):
                     obj_id = obj_ids[row]
-                    self._apply_kf(obj_id, detected_centroids[col])
-                    self.objects[obj_id].rect = detections[col]
+                    self._apply_kf(obj_id, None)
+                    self._apply_kf(obj_id, detected_bottoms[col])
+                    self.objects[obj_id].rect = detected_rects[col]
 
-                    if len(self.objects[obj_id].path) > 15:
+                    self.objects[obj_id].continous_presence_count += 1
+
+                    if self.classupdate_line(detected_bottoms[col]) < 0:
+                        if self.objects[obj_id].obj_class[1] < detected_classes[col][1]:
+                            self.objects[obj_id].obj_class = detected_classes[col]
+
+                    if len(self.objects[obj_id].path) > 4:
                         self.objects[obj_id].direction = self.direction_detector(
                             self.objects[obj_id].lane,
                             self.objects[obj_id].path[-1],
-                            self.objects[obj_id].path[-15]
+                            self.objects[obj_id].path[-4],
                         )
 
-                    new_pt = (
-                        self.objects[obj_id].state[:2]
-                        if self.path_from_centroid else
-                        (self.objects[obj_id].state[0], self.objects[obj_id].state[1] + (detections[col][3]-detections[col][1])//2)
+                    self.objects[obj_id].path.append(
+                        (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
                     )
 
-                    if len(self.objects[obj_id].path) < self.max_track_pts:
-                        self.objects[obj_id].path.append(new_pt)
-                    else:
-                        self.objects[obj_id].path.rotate(-1)
-                        self.objects[obj_id].path[self.max_track_pts-1] = new_pt
+                    self.objects[obj_id].lastdetected_state = self.objects[obj_id].state
+
+                    self._update_eos(obj_id)
 
                     self.objects[obj_id].absent_count = 0
 
@@ -130,19 +191,31 @@ class KalmanTracker(BaseTracker):
             unused_rows = set(range(0, D.shape[0])).difference(used_rows)
             unused_cols = set(range(0, D.shape[1])).difference(used_cols)
 
+            to_deregister = []
+
             if D.shape[0] >= D.shape[1]:
                 for row in unused_rows:
                     obj_id = obj_ids[row]
                     self.objects[obj_id].absent_count += 1
-                    self._apply_kf(obj_id, None)
+                    self._apply_kf(obj_id, None, lost=True)
+                    self.objects[obj_id].path.append(
+                        (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                    )
+
+                    self._update_eos(obj_id, lost=True)
 
                     if self.objects[obj_id].absent_count > self.max_absent:
-                        self._deregister_object(obj_id)
+                        to_deregister.append(obj_id)
+
+                for obj_id in to_deregister:
+                    self._deregister_object(obj_id)
+
             else:
                 for col in unused_cols:
-                    i_count = self.next_objid
-                    self._register_object(tuple(detected_centroids[col]), detections[col])
-                    if self.next_objid > i_count:
-                        self._apply_kf(self.next_objid, detected_centroids[col])
+                    self._register_object(detection_list[col])
+                    self._apply_kf(self.next_objid, detected_bottoms[col])
+                    self.objects[self.next_objid].lastdetected_state = self.objects[
+                        self.next_objid
+                    ].state
 
         return self.objects
