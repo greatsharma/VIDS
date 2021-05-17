@@ -2,58 +2,118 @@ import numpy as np
 
 
 CAMERA_METADATA = {
-    "1": {
-        "cntrarea_thresh1": 400,
-        "cntrarea_thresh2": 300,
-        "leftlane_coords": np.array([(180, 530), (940, 530), (940, 300), (250, 40), (10, 40)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(950, 280), (950, 110), (420, 10), (250, 30)], dtype=np.int32).reshape((-1, 1, 2)),
-        "leftlane_ref": (540, 530),
-        "rightlane_ref": (335, 20),
-        "mid_refs": [(530, 160), (530, 120), (530, 170)],
-        "max_distance": 20,
-    },
+    "place5": {
+        
+        "lane1": {
 
-    "2": {
-        "cntrarea_thresh1": 400,
-        "cntrarea_thresh2": 300,
-        "leftlane_coords": np.array([(150, 530), (940, 530), (940, 350), (5, 120), (5, 300)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(940, 310), (940, 200), (150, 80), (100, 130)], dtype=np.int32).reshape((-1, 1, 2)),
-        "leftlane_ref": (940, 460),
-        "rightlane_ref": (125, 105),
-        "mid_refs": [(520, 250), (520, 100), (520, 350)],
-        "max_distance": 20,
-    },
+            "lane_coords": np.array(
+                    [(12, 452), (168, 465), (430, 100), (394, 97)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
 
-    "3": {
-        "cntrarea_thresh1": 300,
-        "cntrarea_thresh2": 150,
-        "leftlane_coords": np.array([(360, 350), (640, 350), (380, 150), (335, 150)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(5, 315), (260, 350), (315, 150), (270, 150)], dtype=np.int32).reshape((-1, 1, 2)),
-        "leftlane_ref": (500, 350),
-        "rightlane_ref": (292, 150),
-        "mid_refs": [(320, 200), (320, 200), (320, 230)],
-        "max_distance": 20,
-    },
+            "lane_ref": (56, 497),
 
-    "4": {
-        "cntrarea_thresh1": 400,
-        "cntrarea_thresh2": 200,
-        "leftlane_coords": np.array([(120, 400), (560, 400), (615, 110), (520, 110)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(640, 400), (940, 400), (960, 300), (700, 110), (620, 110)], dtype=np.int32).reshape((-1, 1, 2)),
-        "leftlane_ref": (340, 400),
-        "rightlane_ref": (660, 110),
-        "mid_refs": [(615, 175), (615, 225), (615, 275)],
-        "max_distance": 20,
-    },
+            "mid_ref": [(262,218), (427,232)],
 
-    "5": {
-        "cntrarea_thresh1": 400,
-        "cntrarea_thresh2": 300,
-        "leftlane_coords": np.array([(400, 450), (850, 450), (850, 150), (100, 130), (50, 200)], dtype=np.int32).reshape((-1, 1, 2)),
-        "rightlane_coords": np.array([(850, 120), (850, 40), (150, 40), (100, 110)], dtype=np.int32).reshape((-1, 1, 2)),
-        "leftlane_ref": (850, 450),
-        "rightlane_ref": (125, 75),
-        "mid_refs": [(375, 100), (500, 40), (500, 300)],
-        "max_distance": 20,
+            "countinterval": [(86,380), (372,403), (184,289), (404,304)],
+
+            "classupdate_line": [(12, 452), (348, 483), (178,297), (401,315)],
+
+            "deregistering_line_rightdirection": [(395,93), (471,98)],
+    
+            "deregistering_line_wrongdirection": [(6,458), (345,494)],
+
+            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
+
+            "angle": 0.86,
+
+        },
+
+        "lane2": {
+
+            "lane_coords": np.array(
+                    [(168, 465), (348, 483), (469, 102), (430, 100)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
+
+            "lane_ref": (245, 510),
+
+            "mid_ref": [(262,218), (427,232)],
+
+            "countinterval": [(86,380), (372,403), (184,289), (404,304)],
+
+            "classupdate_line": [(12, 452), (348, 483), (178,297), (401,315)],
+
+            "deregistering_line_rightdirection": [(395,93), (471,98)],
+
+            "deregistering_line_wrongdirection": [(6,458), (345,494)],
+
+            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
+
+            "angle": 1.102,
+
+        },
+
+        "lane3": {
+
+            "lane_coords": np.array(
+                    [(641, 477), (834,473), (574, 105), (530, 105)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
+
+            "lane_ref": (757, 523),
+
+            "mid_ref": [(565, 220), (745, 220)],
+
+            "countinterval": [(577,267), (788,265), (608,366), (887,359)],
+
+            "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
+
+            "deregistering_line_rightdirection": [(529, 100), (613, 100)],
+
+            "deregistering_line_wrongdirection": [(644, 488), (844, 484)],
+
+            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
+
+            "angle": -1.107,
+
+        },
+
+        "lane4": {
+
+            "lane_coords": np.array(
+                    [(801, 426), (950, 417), (615, 105), (574, 105)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
+
+            "lane_ref": (930, 506),
+
+            "mid_ref": [(565, 220), (745, 220)],
+
+            "countinterval": [(577,267), (788,265), (608,366), (887,359)],
+
+            "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
+
+            "deregistering_line_rightdirection": [(529, 100), (613, 100)],
+
+            "deregistering_line_wrongdirection": [(810,436), (957,424)],
+
+            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
+
+            "angle": -0.852,
+
+        },
+
+        "initial_maxdistances": {
+            "hmv": [15,30], # [above_midref, below_midref]
+            "lmv,auto,tw": [25,50],
+            "pedestrian,cattles": [6,12],
+        },
     },
 }
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+
+    pprint(CAMERA_METADATA)
