@@ -3,10 +3,20 @@ from scipy.spatial import distance
 
 
 def init_classupdate_line(camera_meta: dict) -> Callable:
-    (Ax, Ay), (Bx, By) = camera_meta["classupdate_line"]
+    (A1x, A1y), (B1x, B1y) = camera_meta["lane1"]["classupdate_line"]
+    (A2x, A2y), (B2x, B2y) = camera_meta["lane2"]["classupdate_line"]
+    (A3x, A3y), (B3x, B3y) = camera_meta["lane3"]["classupdate_line"]
+    (A4x, A4y), (B4x, B4y) = camera_meta["lane4"]["classupdate_line"]
 
-    def within_interval(pt):
-        return (pt[0] - Ax) * (By - Ay) - (pt[1] - Ay) * (Bx - Ax)
+    def within_interval(pt, lane):
+        if lane == "1":
+            return (pt[0] - A1x) * (B1y - A1y) - (pt[1] - A1y) * (B1x - A1x)
+        elif lane == "2":
+            return (pt[0] - A2x) * (B2y - A2y) - (pt[1] - A2y) * (B2x - A2x)
+        elif lane == "3":
+            return (pt[0] - A3x) * (B3y - A3y) - (pt[1] - A3y) * (B3x - A3x)
+        else:
+            return (pt[0] - A4x) * (B4y - A4y) - (pt[1] - A4y) * (B4x - A4x)
 
     return within_interval
 
