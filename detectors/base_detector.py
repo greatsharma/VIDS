@@ -148,7 +148,7 @@ class BaseDetector(object):
 
             obj_rect = (x1, y1, x2, y2)
 
-            obj_bottom = (obj_rect[0] + obj_rect[2])//2, (obj_rect[1] + obj_rect[3])//2
+            obj_bottom = (obj_rect[0] + obj_rect[2])//2, (obj_rect[3])
             lane = self.lane_detector(obj_bottom)
 
             if lane is None:
