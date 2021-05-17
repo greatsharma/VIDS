@@ -144,6 +144,6 @@ cython_debug/
 notebooks/
 inputs/
 outputs/
-reads/
+misc/
 yolo_weights/
-TODO
+TODO.txt
