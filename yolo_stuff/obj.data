@@ -1,0 +1,5 @@
+classes= 6
+train  = /home/yolo/Downloads/images-20210414T055036Z-001/LabelIing-2/Train.txt
+valid  = /home/yolo/Downloads/images-20210414T055036Z-001/LabelIing-2/Test.txt
+names = /home/yolo/Downloads/images-20210414T055036Z-001/LabelIing-2/obj.names
+backup = /home/yolo/Downloads/images-20210414T055036Z-001/LabelIing-2/weights_416-3/
