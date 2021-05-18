@@ -105,9 +105,9 @@ class BaseTracker(object):
             angle = 180 - math.degrees(self.lane_angles["4"])
 
         self.objects[self.next_objid].angle_range = [
-            angle - angle * 0.5,
+            angle - angle * 0.25,
             angle,
-            angle + angle * 0.5,
+            angle + angle * 0.25,
         ]
 
         if detection["obj_class"][0] in "hmv":
@@ -122,14 +122,7 @@ class BaseTracker(object):
     def _update_eos(self, obj_id, lost=False) -> None:
         self.objects[obj_id].eos.centre = self.objects[obj_id].path[-1]
 
-        if self.objects[obj_id].obj_class[0] in "hmv":
-            if self.objects[obj_id].lane == "1":
-                if len(self.objects[obj_id].path) <= 4:
-                    return
-            else:
-                if len(self.objects[obj_id].path) <= 3:
-                    return
-        elif len(self.objects[obj_id].path) <= 2:
+        if len(self.objects[obj_id].path) <= 4:
             return
 
         pt1, pt2 = self.objects[obj_id].path[-2], self.objects[obj_id].path[-1]
@@ -154,34 +147,34 @@ class BaseTracker(object):
 
             if self.objects[obj_id].obj_class[0] in "hmv":
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.5 * self.objects[obj_id].eos.last_d), 20
+                    int(2.5 * self.objects[obj_id].eos.last_d), 15
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 15
+                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 10
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 40
+                    int(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 3), 25
+                    int(self.objects[obj_id].eos.semi_majoraxis / 3), 15
                 )
 
         else:
 
             if self.objects[obj_id].obj_class[0] in "hmv":
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 30
+                    int(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 1.75), 20
+                    int(self.objects[obj_id].eos.semi_majoraxis / 1.75), 15
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 50
+                    int(2.25 * self.objects[obj_id].eos.last_d), 25
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 35
+                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 20
                 )
 
         if self.objects[obj_id].direction:
