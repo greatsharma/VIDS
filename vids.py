@@ -11,7 +11,7 @@ import numpy as np
 from camera_metadata import CAMERA_METADATA
 from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
-from utils import draw_text_with_backgroud, draw_tracked_objects
+from utils import draw_tracked_objects
 from utils import init_lane_detector, init_direction_detector, init_classupdate_line
 
 
@@ -53,8 +53,6 @@ class VehicleTracking(object):
         self.min_continous_presence = min_continous_presence
         self.direction_detector_interval = direction_detector_interval
         self.mode = mode
-
-        # self.countintervals = self.camera_meta["adaptive_countintervals"]
 
         self.vidcap = cv2.VideoCapture(self.input_path)
 
@@ -111,7 +109,7 @@ class VehicleTracking(object):
             "4": self.camera_meta["lane4"]["angle"],
         }
         
-        velocity_regression = {} #self.camera_meta["velocity_regression"]
+        velocity_regression = {}
 
         if self.tracker_type == "centroid":
             self.tracker = CentroidTracker(
@@ -359,17 +357,17 @@ class VehicleTracking(object):
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
                     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
-            fps = round(frame_count / (time.time()-tik1), 4)
+            # fps = round(frame_count / (time.time()-tik1), 4)
 
-            draw_text_with_backgroud(self.img_for_text, "Vehicle Incident Detection System", x=15, y=30, font_scale=0.55, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"Frame count: {frame_count}", x=15, y=220, font_scale=0.5, thickness=1)
-            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=240, font_scale=0.5, thickness=1)
+            # draw_text_with_backgroud(self.img_for_text, "Vehicle Incident Detection System", x=15, y=30, font_scale=0.55, thickness=1)
+            # draw_text_with_backgroud(self.img_for_text, f"Frame count: {frame_count}", x=15, y=220, font_scale=0.5, thickness=1)
+            # draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=240, font_scale=0.5, thickness=1)
 
-            out_frame = np.hstack((frame, self.img_for_text))
-            cv2.imshow(f"VIDS", out_frame)
+            # out_frame = np.hstack((frame, self.img_for_text))
+            cv2.imshow(f"VIDS", frame)
 
             if self.output:
-                self.videowriter.write(out_frame)
+                self.videowriter.write(frame)
 
             key = cv2.waitKey(1)
 

@@ -105,8 +105,8 @@ CAMERA_METADATA = {
         },
 
         "initial_maxdistances": {
-            "hmv": 30, #[15,30], # [above_midref, below_midref]
-            "lmv,auto,tw": 50, #[25,50],
+            "hmv": 25, #[15,30], # [above_midref, below_midref]
+            "lmv,auto,tw": 35, #[25,50],
             "pedestrian,cattles": 12, #[6,12],
         },
     },
