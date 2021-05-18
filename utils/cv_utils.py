@@ -113,10 +113,15 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
+        path_length = len(obj.path)
+
+        condition = path_length < 60 or (path_length > 140 and path_length < 220)
+
         if obj.direction:
-            txt = obj.obj_class[0]
-            if self.mode != "pretty":
-                txt = obj.lane + ": " + obj.obj_class[0]
+            if condition:
+                txt = str(obj.objid) + ": " + obj.obj_class[0]
+            else:
+                txt = obj.obj_class[0]
 
             draw_text_with_backgroud(
                 frame,
@@ -133,9 +138,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             base_color = [0, 0, 255]
 
-            txt = "wrong-way"
-            if self.mode != "pretty":
+            if condition:
                 txt = str(obj.objid) + ": " + "wrong-way"
+            else:
+                txt = "wrong-way"
 
             draw_text_with_backgroud(
                 frame,
@@ -150,10 +156,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 box_coords_2=(6, -6),
             )
 
-        if len(obj.path) <= self.max_track_pts:
+        if path_length <= self.max_track_pts:
             path = obj.path
         else:
-            path = obj.path[len(obj.path) - self.max_track_pts :]
+            path = obj.path[path_length - self.max_track_pts :]
 
         prev_point = None
         for pt in path:
