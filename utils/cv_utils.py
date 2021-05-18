@@ -20,8 +20,8 @@ def draw_text_with_backgroud(
     font_scale,
     thickness=1,
     font=cv2.FONT_HERSHEY_COMPLEX,
-    background=None,
-    foreground=(10, 10, 10),
+    background=(0,0,0),
+    foreground=(255,255,255),
     box_coords_1=(-5, 5),
     box_coords_2=(5, -5),
 ):
@@ -115,7 +115,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         path_length = len(obj.path)
 
-        condition = path_length < 60 or (path_length > 140 and path_length < 220)
+        condition = path_length < 60 or (path_length > 140 and path_length < 200)
 
         if obj.direction:
             if condition:
@@ -130,8 +130,6 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 y,
                 font_scale=0.35,
                 thickness=1,
-                background=(0,0,0),
-                foreground=(255,255,255),
                 box_coords_1=(-4, 4),
                 box_coords_2=(6, -6),
             )
@@ -150,8 +148,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 y,
                 font_scale=0.35,
                 thickness=1,
-                foreground=(0, 0, 0),
-                background=(0, 0, 255),
+                foreground=(0, 0, 255),
                 box_coords_1=(-4, 4),
                 box_coords_2=(6, -6),
             )

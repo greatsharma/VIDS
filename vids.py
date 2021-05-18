@@ -359,6 +359,12 @@ class VehicleTracking(object):
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
                     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
+            fps = round(frame_count / (time.time()-tik1), 4)
+
+            draw_text_with_backgroud(self.img_for_text, "Vehicle Incident Detection System", x=15, y=30, font_scale=0.55, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"Frame count: {frame_count}", x=15, y=220, font_scale=0.5, thickness=1)
+            draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=240, font_scale=0.5, thickness=1)
+
             out_frame = np.hstack((frame, self.img_for_text))
             cv2.imshow(f"VIDS", out_frame)
 
