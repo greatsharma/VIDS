@@ -28,6 +28,7 @@ class VehicleTracking(object):
         max_track_pts,
         max_absent,
         min_continous_presence,
+        direction_detector_interval,
         mode,
     ):
 
@@ -40,7 +41,7 @@ class VehicleTracking(object):
         self.inference_type = inference_type
 
         self.output = output
-        self.output_fps = output_fps
+        self.output_fps = output_fps            
 
         self.camera_meta = CAMERA_METADATA[self.camera_id]
 
@@ -50,11 +51,15 @@ class VehicleTracking(object):
         self.max_track_pts = max_track_pts
         self.max_absent = max_absent
         self.min_continous_presence = min_continous_presence
+        self.direction_detector_interval = direction_detector_interval
         self.mode = mode
 
         # self.countintervals = self.camera_meta["adaptive_countintervals"]
 
         self.vidcap = cv2.VideoCapture(self.input_path)
+
+        if self.output_fps is None:
+            self.output_fps = int(self.vidcap.get(cv2.CAP_PROP_FPS))
 
         self._init_detector()
         self._init_tracker()
@@ -75,24 +80,25 @@ class VehicleTracking(object):
             interpolation=cv2.INTER_LINEAR,
         )
 
-        self.img_for_text = np.zeros(shape=(self.frame_h, 360))
+        self.img_for_text = np.zeros(shape=(self.frame_h, 360, 3), dtype=np.uint8)
 
-        self.lane_detector = init_lane_detector(self.camera_meta)
+        lane_detector = init_lane_detector(self.camera_meta)
 
         if self.inference_type == "trt":
             self.detector = TrtYoloDetector(
                 initial_frame,
-                self.lane_detector,
+                lane_detector,
                 self.detection_thresh,
             )
         else:
             self.detector = VanillaYoloDetector(
                 initial_frame,
-                self.lane_detector,
+                lane_detector,
                 self.detection_thresh,
             )
 
     def _init_tracker(self):
+        lane_detector = init_lane_detector(self.camera_meta)
         direction_detector = init_direction_detector(self.camera_meta)
         classupdate_line = init_classupdate_line(self.camera_meta)
 
@@ -109,7 +115,9 @@ class VehicleTracking(object):
 
         if self.tracker_type == "centroid":
             self.tracker = CentroidTracker(
+                lane_detector,
                 direction_detector,
+                self.direction_detector_interval,
                 initial_maxdistances,
                 classupdate_line,
                 lane_angles,
@@ -118,7 +126,9 @@ class VehicleTracking(object):
             )
         else:
             self.tracker = KalmanTracker(
+                lane_detector,
                 direction_detector,
+                self.direction_detector_interval,
                 initial_maxdistances,
                 classupdate_line,
                 lane_angles,
@@ -481,11 +491,11 @@ class VehicleTracking(object):
                 #             box_coords_2=(10, -10),
                 #         )
 
-            # out_frame = np.hstack((frame, self.img_for_text))
-            cv2.imshow(f"VIDS", frame)
+            out_frame = np.hstack((frame, self.img_for_text))
+            cv2.imshow(f"VIDS", out_frame)
 
             if self.output:
-                self.videowriter.write(frame)
+                self.videowriter.write(out_frame)
 
             key = cv2.waitKey(1)
 
@@ -494,7 +504,10 @@ class VehicleTracking(object):
             elif key == ord("q"):
                 break
 
-            print(frame_count)
+            tok = time.time()
+            curr_fps = round(1.0 / (tok-tik2), 4)
+            avg_fps = round(frame_count / (tok-tik1), 4)
+            print(frame_count, curr_fps,avg_fps)
 
         self._clean_exit(currenthour_dir, currentday_dir)
         self.vidcap.release()
@@ -508,7 +521,7 @@ if __name__ == "__main__":
         "--input",
         type=str,
         required=False,
-        default="inputs/place5_clip1.avi",
+        default="inputs/place5_clip1.mp4",
         help="path to input video",
     )
 
@@ -535,8 +548,8 @@ if __name__ == "__main__":
         "-ofps",
         "--output_fps",
         type=int,
-        required=True,
-        help="output fps",
+        required=False,
+        help="output fps, default is fps of input video",
     )
 
     ap.add_argument(
@@ -573,7 +586,7 @@ if __name__ == "__main__":
         "--max_track_points",
         type=int,
         required=False,
-        default=15,
+        default=100,
         help="maximum points to be tracked for a vehicle",
     )
 
@@ -582,7 +595,7 @@ if __name__ == "__main__":
         "--max_absent",
         type=int,
         required=False,
-        default=10,
+        default=50,
         help="maximum frames a vehicle can be absent, after that it will be deregistered",
     )
 
@@ -591,8 +604,17 @@ if __name__ == "__main__":
         "--min_continous_presence",
         type=int,
         required=False,
-        default=3,
+        default=6,
         help="minimum continous frames a vehicle is present, if less then this, then it will be deregistered",
+    )
+
+    ap.add_argument(
+        "-ddi",
+        "--direction_detector_interval",
+        type=int,
+        required=False,
+        default=25,
+        help="interval between two frames for direction detection",
     )
 
     ap.add_argument(
@@ -620,6 +642,7 @@ if __name__ == "__main__":
         args["max_track_points"],
         args["max_absent"],
         args["min_continous_presence"],
+        args["direction_detector_interval"],
         args["mode"],
     )
 
