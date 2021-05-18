@@ -335,161 +335,29 @@ class VehicleTracking(object):
             detection_list = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detection_list)
 
-            # self._count_vehicles(tracked_objects)
-
-            # self._log(tracked_objects)
-
             draw_tracked_objects(self, frame, tracked_objects)
 
-            # if self.mode == "debug":
-            #     for l in ["leftlane", "rightlane"]:
-            #         cv2.polylines(
-            #             frame,
-            #             [self.camera_meta[f"{l}_coords"]],
-            #             isClosed=True,
-            #             color=(0, 0, 0),
-            #             thickness=1,
-            #         )
-            #         cv2.circle(
-            #             frame,
-            #             self.camera_meta[f"{l}_ref"],
-            #             radius=3,
-            #             color=(0, 0, 255),
-            #             thickness=-1,
-            #         )
+            if self.mode == "debug":
+                for l in [1,2,3,4]:
+                    cv2.polylines(frame, [self.camera_meta[f"lane{l}"]["lane_coords"]],
+                        isClosed=True, color=(0, 0, 0), thickness=1,
+                    )
+                    cv2.circle(frame, self.camera_meta[f"lane{l}"]["lane_ref"],
+                        radius=3, color=(0, 0, 255), thickness=-1,
+                    )
 
-                # pt1,pt2 = self.camera_meta["mid_ref"]
-                # cv2.line(frame, pt1, pt2, (0, 0, 255), 2)
+                    pt1,pt2 = self.camera_meta[f"lane{l}"]["mid_ref"]
+                    cv2.line(frame, pt1, pt2, (0, 0, 255), 1)
 
-                # pt1, pt2, pt3, pt4 = self.camera_meta["adaptive_countintervals"][
-                #     "3t,4t,5t,6t,lgv,tractr,2t,bus,mb"
-                # ]
-                # cv2.line(frame, pt1, pt2, (255, 255, 255), 1)
-                # cv2.line(frame, pt3, pt4, (255, 255, 255), 1)
+                    pt1, pt2, pt3, pt4 = self.camera_meta[f"lane{l}"]["classupdate_line"]
+                    cv2.line(frame, pt1, pt2, (255, 0, 255), 1)
+                    cv2.line(frame, pt3, pt4, (255, 0, 255), 1)
 
-                # pt1, pt2, pt3, pt4 = self.camera_meta["adaptive_countintervals"][
-                #     "wrong_direction"
-                # ]
-                # cv2.line(frame, pt1, pt2, (255, 153, 153), 1)
-                # cv2.line(frame, pt3, pt4, (255, 153, 153), 1)
+                    pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_rightdirection"]
+                    cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
 
-                # pt1, pt2 = self.camera_meta["classupdate_line"]
-                # cv2.line(frame, pt1, pt2, (255, 0, 255), 1)
-
-                # pt1, pt2 = self.camera_meta["deregistering_line_rightdirection"]
-                # cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
-
-                # pt1, pt2 = self.camera_meta["deregistering_line_wrongdirection"]
-                # cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
-
-                # for name, xcoord in zip(
-                #     ["Class", "L1", "L2", "Total"], [15, 170, 240, 300]
-                # ):
-                #     draw_text_with_backgroud(
-                #         self.img_for_text,
-                #         name,
-                #         x=xcoord,
-                #         y=150,
-                #         font_scale=0.6,
-                #         thickness=2,
-                #     )
-
-                # y = 180
-                # vehicles_lane1 = 0
-                # vehicles_lane2 = 0
-
-                # for (k1, v1), (_, v2) in zip(
-                #     self.class_counts["1"].items(), self.class_counts["2"].items()
-                # ):
-                #     vehicles_lane1 += v1
-                #     vehicles_lane2 += v2
-
-                #     for name, xcoord, bg in zip(
-                #         [k1, str(v1), str(v2), str(v1 + v2)],
-                #         [15, 170, 240, 310],
-                #         (None, (246, 231, 215), (242, 226, 209), (241, 222, 201)),
-                #     ):
-
-                #         draw_text_with_backgroud(
-                #             self.img_for_text,
-                #             name,
-                #             x=xcoord,
-                #             y=y,
-                #             font_scale=0.5,
-                #             thickness=1,
-                #             background=bg,
-                #         )
-
-                #     y += 20
-
-                # y += 20
-                # for name, xcoord, bg in zip(
-                #     [
-                #         "Total",
-                #         str(vehicles_lane1),
-                #         str(vehicles_lane2),
-                #         str(vehicles_lane1 + vehicles_lane2),
-                #     ],
-                #     [15, 170, 240, 310],
-                #     (None, (246, 231, 215), (242, 226, 209), (241, 222, 201)),
-                # ):
-
-                #     draw_text_with_backgroud(
-                #         self.img_for_text,
-                #         name,
-                #         x=xcoord,
-                #         y=y,
-                #         font_scale=0.55,
-                #         thickness=2,
-                #         background=bg,
-                #     )
-
-                # draw_text_with_backgroud(
-                #     self.img_for_text,
-                #     f"WD : {self.wrongdir_count}",
-                #     x=15,
-                #     y=500,
-                #     font_scale=0.6,
-                #     thickness=2,
-                #     background=(242, 226, 209),
-                # )
-
-                # if self.mode != "debug":
-                #     for name in ["L1", "L2"]:
-                #         k = name + " annotation_data"
-                #         txt = name + " : "
-
-                #         if name == "L1":
-                #             txt += str(vehicles_lane1)
-                #         else:
-                #             txt += str(vehicles_lane2)
-
-                #         cv2.line(
-                #             frame,
-                #             self.camera_meta[k][0],
-                #             self.camera_meta[k][1],
-                #             (128, 0, 128),
-                #             2,
-                #         )
-                #         cv2.line(
-                #             frame,
-                #             self.camera_meta[k][1],
-                #             self.camera_meta[k][2],
-                #             (128, 0, 128),
-                #             2,
-                #         )
-                #         draw_text_with_backgroud(
-                #             frame,
-                #             txt,
-                #             x=self.camera_meta[k][3],
-                #             y=self.camera_meta[k][4],
-                #             font_scale=0.7,
-                #             thickness=1,
-                #             background=(128, 0, 128),
-                #             foreground=(255, 255, 255),
-                #             box_coords_1=(-7, 7),
-                #             box_coords_2=(10, -10),
-                #         )
+                    pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
+                    cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
             out_frame = np.hstack((frame, self.img_for_text))
             cv2.imshow(f"VIDS", out_frame)
@@ -613,7 +481,7 @@ if __name__ == "__main__":
         "--direction_detector_interval",
         type=int,
         required=False,
-        default=25,
+        default=50,
         help="interval between two frames for direction detection",
     )
 
