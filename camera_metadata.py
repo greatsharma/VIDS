@@ -69,9 +69,9 @@ CAMERA_METADATA = {
 
             "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
 
-            "deregistering_line_rightdirection": [(529, 100), (613, 100)],
+            "deregistering_line_rightdirection": [(644, 488), (844, 484)],
 
-            "deregistering_line_wrongdirection": [(644, 488), (844, 484)],
+            "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
             "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
 
@@ -94,9 +94,9 @@ CAMERA_METADATA = {
 
             "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
 
-            "deregistering_line_rightdirection": [(529, 100), (613, 100)],
+            "deregistering_line_rightdirection": [(810,436), (957,424)],
 
-            "deregistering_line_wrongdirection": [(810,436), (957,424)],
+            "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
             "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
 
@@ -105,9 +105,9 @@ CAMERA_METADATA = {
         },
 
         "initial_maxdistances": {
-            "hmv": [15,30], # [above_midref, below_midref]
-            "lmv,auto,tw": [25,50],
-            "pedestrian,cattles": [6,12],
+            "hmv": 30, #[15,30], # [above_midref, below_midref]
+            "lmv,auto,tw": 50, #[25,50],
+            "pedestrian,cattles": 12, #[6,12],
         },
     },
 }
