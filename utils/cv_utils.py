@@ -123,29 +123,31 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 txt,
                 x,
                 y,
-                font_scale=0.6,
-                thickness=2,
-                background=(243, 227, 218),
-                foreground=(0, 0, 0),
-                box_coords_1=(-7, 7),
-                box_coords_2=(10, -10),
+                font_scale=0.35,
+                thickness=1,
+                background=(0,0,0),
+                foreground=(255,255,255),
+                box_coords_1=(-4, 4),
+                box_coords_2=(6, -6),
             )
         else:
             base_color = [0, 0, 255]
 
-            txt = "Wrong Direction"
+            txt = "wrong-way"
             if self.mode != "pretty":
-                txt = str(obj.objid) + ": " + "Wrong Direction"
+                txt = str(obj.objid) + ": " + "wrong-way"
 
             draw_text_with_backgroud(
                 frame,
                 txt,
                 x,
                 y,
-                font_scale=0.5,
+                font_scale=0.35,
                 thickness=1,
                 foreground=(0, 0, 0),
                 background=(0, 0, 255),
+                box_coords_1=(-4, 4),
+                box_coords_2=(6, -6),
             )
 
         if len(obj.path) <= self.max_track_pts:
