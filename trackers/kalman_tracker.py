@@ -164,15 +164,17 @@ class KalmanTracker(BaseTracker):
 
                     self.objects[obj_id].continous_presence_count += 1
 
+                    self.objects[obj_id].lane = self.lane_detector(detected_bottoms[col])
+
                     if self.classupdate_line(detected_bottoms[col], self.objects[obj_id].lane) < 0:
                         if self.objects[obj_id].obj_class[1] < detected_classes[col][1]:
                             self.objects[obj_id].obj_class = detected_classes[col]
 
-                    if len(self.objects[obj_id].path) > 4:
+                    if len(self.objects[obj_id].path) > self.direction_detector_interval:
                         self.objects[obj_id].direction = self.direction_detector(
                             self.objects[obj_id].lane,
                             self.objects[obj_id].path[-1],
-                            self.objects[obj_id].path[-4],
+                            self.objects[obj_id].path[-self.direction_detector_interval],
                         )
 
                     self.objects[obj_id].path.append(

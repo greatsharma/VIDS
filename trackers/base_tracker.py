@@ -53,7 +53,9 @@ class VehicleObject(object):
 class BaseTracker(object):
     def __init__(
         self,
+        lane_detector: Callable,
         direction_detector: Callable,
+        direction_detector_interval: int,
         initial_maxdistances: dict,
         classupdate_line: Callable,
         lane_angles: dict,
@@ -61,7 +63,9 @@ class BaseTracker(object):
         max_absent: int,
     ) -> None:
 
+        self.lane_detector = lane_detector
         self.direction_detector = direction_detector
+        self.direction_detector_interval = direction_detector_interval
         self.initial_maxdistances = initial_maxdistances
         self.classupdate_line = classupdate_line
         self.lane_angles = lane_angles
