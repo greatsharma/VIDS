@@ -78,8 +78,6 @@ class VehicleTracking(object):
             interpolation=cv2.INTER_LINEAR,
         )
 
-        self.img_for_text = np.zeros(shape=(self.frame_h, 360, 3), dtype=np.uint8)
-
         lane_detector = init_lane_detector(self.camera_meta)
 
         if self.inference_type == "trt":
@@ -223,7 +221,7 @@ class VehicleTracking(object):
                 self.video_filename,
                 cv2.VideoWriter_fourcc("M", "J", "P", "G"),
                 self.output_fps,
-                (1784, 540),
+                (960, 540),
             )
 
         flag1 = True
@@ -314,8 +312,8 @@ class VehicleTracking(object):
                         self.videowriter = cv2.VideoWriter(
                             self.video_filename,
                             cv2.VideoWriter_fourcc("M", "J", "P", "G"),
-                            15.0,
-                            (1784, 540),
+                            self.output_fps,
+                            (960, 540),
                         )
 
                         print("-------initialized new video for the hour-------\n")
@@ -357,20 +355,12 @@ class VehicleTracking(object):
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
                     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
-            # fps = round(frame_count / (time.time()-tik1), 4)
-
-            # draw_text_with_backgroud(self.img_for_text, "Vehicle Incident Detection System", x=15, y=30, font_scale=0.55, thickness=1)
-            # draw_text_with_backgroud(self.img_for_text, f"Frame count: {frame_count}", x=15, y=220, font_scale=0.5, thickness=1)
-            # draw_text_with_backgroud(self.img_for_text, f"FPS: {fps}", x=15, y=240, font_scale=0.5, thickness=1)
-
-            # out_frame = np.hstack((frame, self.img_for_text))
-            cv2.imshow(f"VIDS", frame)
-
             if self.output:
                 self.videowriter.write(frame)
 
+            cv2.imshow(f"VIDS", frame)
             key = cv2.waitKey(1)
-
+            
             if key == ord("p"):
                 cv2.waitKey(-1)
             elif key == ord("q"):
@@ -381,7 +371,9 @@ class VehicleTracking(object):
             avg_fps = round(frame_count / (tok-tik1), 4)
             print(frame_count, curr_fps,avg_fps)
 
-        self._clean_exit(currenthour_dir, currentday_dir)
+        if self.output:
+            self._clean_exit(currenthour_dir, currentday_dir)
+    
         self.vidcap.release()
         cv2.destroyAllWindows()
 
@@ -393,7 +385,7 @@ if __name__ == "__main__":
         "--input",
         type=str,
         required=False,
-        default="inputs/place5_clip1.mp4",
+        default="inputs/place5_clip1.avi",
         help="path to input video",
     )
 
@@ -458,7 +450,7 @@ if __name__ == "__main__":
         "--max_track_points",
         type=int,
         required=False,
-        default=100,
+        default=50,
         help="maximum points to be tracked for a vehicle",
     )
 
@@ -467,7 +459,7 @@ if __name__ == "__main__":
         "--max_absent",
         type=int,
         required=False,
-        default=50,
+        default=20,
         help="maximum frames a vehicle can be absent, after that it will be deregistered",
     )
 
@@ -476,7 +468,7 @@ if __name__ == "__main__":
         "--min_continous_presence",
         type=int,
         required=False,
-        default=6,
+        default=3,
         help="minimum continous frames a vehicle is present, if less then this, then it will be deregistered",
     )
 
@@ -485,7 +477,7 @@ if __name__ == "__main__":
         "--direction_detector_interval",
         type=int,
         required=False,
-        default=50,
+        default=20,
         help="interval between two frames for direction detection",
     )
 

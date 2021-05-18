@@ -52,14 +52,6 @@ class KalmanTracker(BaseTracker):
                 x = list(x)
 
                 objlane = self.objects[obj_id].lane
-                objcls = self.objects[obj_id].obj_class[0]
-
-                # mx = self.velocity_regression[objlane][objcls][0][0]
-                # my = self.velocity_regression[objlane][objcls][1][0]
-                # cx = self.velocity_regression[objlane][objcls][0][1]
-                # cy = self.velocity_regression[objlane][objcls][1][1]
-                # x[1] = mx * x[0] + cx
-                # x[3] = my * x[2] + cy
 
                 pt1 = [
                     self.objects[obj_id].lastdetected_state[0],

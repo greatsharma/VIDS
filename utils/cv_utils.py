@@ -115,7 +115,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         path_length = len(obj.path)
 
-        condition = path_length < 60 or (path_length > 140 and path_length < 200)
+        condition = path_length < 30
 
         if obj.direction:
             if condition:
@@ -189,9 +189,6 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 color=base_color,
                 thickness=1,
             )
-
-            if len(path) > 2:
-                cv2.arrowedLine(frame, path[-2], path[-1], (0, 0, 0), 2)
 
         # v = checkpoint(centre[0], centre[1], obj_bottom[0], obj_bottom[1], semi_majoraxis, semi_minoraxis, angle)
         # if v > 1:

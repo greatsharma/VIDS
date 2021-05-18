@@ -111,9 +111,9 @@ class BaseTracker(object):
         ]
 
         if detection["obj_class"][0] in "hmv":
-            semi_minoraxis = semi_majoraxis // 2
+            semi_minoraxis = int(semi_majoraxis / 1.5)
         else:
-            semi_minoraxis = semi_majoraxis // 3
+            semi_minoraxis = int(semi_majoraxis / 2.5)
 
         self.objects[self.next_objid].eos = EllipseofSearch(
             detection["obj_bottom"], semi_majoraxis, semi_minoraxis, angle
@@ -122,7 +122,7 @@ class BaseTracker(object):
     def _update_eos(self, obj_id, lost=False) -> None:
         self.objects[obj_id].eos.centre = self.objects[obj_id].path[-1]
 
-        if len(self.objects[obj_id].path) <= 4:
+        if len(self.objects[obj_id].path) <= 3:
             return
 
         pt1, pt2 = self.objects[obj_id].path[-2], self.objects[obj_id].path[-1]
@@ -157,7 +157,7 @@ class BaseTracker(object):
                     int(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 3), 15
+                    int(self.objects[obj_id].eos.semi_majoraxis / 2.5), 15
                 )
 
         else:
