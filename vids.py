@@ -141,7 +141,7 @@ class VehicleTracking(object):
                 "-vcodec",
                 "libx264",
                 "-crf",
-                "30",
+                "24",
                 output_path,
                 "-hide_banner",
                 "-loglevel",
@@ -158,20 +158,6 @@ class VehicleTracking(object):
             if del_prev_video:
                 os.remove(input_path)
 
-    def _delete_oneday_videos(self, output_path):
-        status = subprocess.call(
-            [
-                "python",
-                "delete_oneday_videos.py",
-                "-ip",
-                output_path,
-            ]
-        )
-
-        if status:
-            msg = f"VideoDeletion_Error : {datetime.datetime.now()} : Error in function _delete_oneday_videos !"
-            print(msg)
-
     def _clean_exit(self):
         print(
             "\nExecuting clean exit, this may take few minutes depending on compression...\n"
@@ -186,46 +172,22 @@ class VehicleTracking(object):
         frame_count = 0
 
         date = datetime.datetime.now()
-        videodeletion_day = date
-
-        videodeletion_initialization_day = videodeletion_day + datetime.timedelta(
-            days=4
-        )
-        videodeletion_initialization_day = videodeletion_initialization_day.strftime(
-            "%d_%m_%Y"
-        )
-        flag_videodeletion = False
-
         date = date.strftime("%d_%m_%Y_%H:%M:%S")
+        date = date.replace(":", "")
 
-        currentday_dir = f"outputs/{self.camera_id}/{date[:10]}/"
-        if not os.path.exists(currentday_dir):
-            os.mkdir(currentday_dir)
+        curr_folder = "outputs/place5/" + date
 
-        currenthour_dir = currentday_dir + date[11:13] + "/"
-        if not os.path.exists(currenthour_dir):
-            os.mkdir(currenthour_dir)
-
-        log_filename = currenthour_dir + date[11:13] + ".txt"
-        self.log_filewriter = open(log_filename, "w")
-
-        trackpath_filename = currenthour_dir + date[11:13] + f"_trkpath.txt"
-        self.tracker.trackpath_filewriter = open(trackpath_filename, "w")
-
-        cc_filename = currenthour_dir + date[11:13] + "_finalcounts.txt"
-        self.cc_filewriter = open(cc_filename, "w")
+        if not os.path.exists(curr_folder):
+            os.mkdir(curr_folder)
 
         if self.output:
-            self.video_filename = currenthour_dir + date[11:13] + ".avi"
+            self.video_filename = curr_folder + "/vids.avi"
             self.videowriter = cv2.VideoWriter(
                 self.video_filename,
                 cv2.VideoWriter_fourcc("M", "J", "P", "G"),
                 self.output_fps,
                 (960, 540),
             )
-
-        flag1 = True
-        flag2 = True
 
         tik1 = time.time()
 
@@ -235,7 +197,7 @@ class VehicleTracking(object):
 
             while not status:
                 if self.input_path.startswith("inputs"):
-                    self._clean_exit(currenthour_dir, currentday_dir)
+                    self._clean_exit()
                     self.vidcap.release()
                     cv2.destroyAllWindows()
                     sys.exit()
@@ -248,88 +210,17 @@ class VehicleTracking(object):
 
             frame_count += 1
 
-            date = datetime.datetime.now()
-            date = date.strftime("%d_%m_%Y_%H:%M:%S")
-
-            if videodeletion_initialization_day == date[:10]:
-                flag_videodeletion = True
-
-            if date[11:16] == "00:00":
-                if flag1:
-                    if self.output and flag_videodeletion:
-                        self.videowriter.release()
-
-                        output_path = f"outputs/{self.camera_id}/{videodeletion_day.strftime('%d_%m_%Y')}/"
-                        t2 = threading.Thread(
-                            target=self._delete_oneday_videos,
-                            kwargs={"output_path": output_path},
-                        )
-                        t2.start()
-
-                        videodeletion_day += datetime.timedelta(days=1)
-
-                    currentday_dir = f"outputs/{self.camera_id}/{date[:10]}/"
-                    if not os.path.exists(currentday_dir):
-                        os.mkdir(currentday_dir)
-
-                    self.tracker.next_objid = 0
-                    self.logged_ids = []
-
-                    flag1 = False
-
-            else:
-                flag1 = True
-
-            if date[14:16] == "00":
-                if flag2:
-                    currenthour_dir = currentday_dir + date[11:13] + "/"
-                    if not os.path.exists(currenthour_dir):
-                        os.mkdir(currenthour_dir)
-
-                    log_filename = currenthour_dir + date[11:13] + ".txt"
-                    self.log_filewriter = open(log_filename, "w")
-
-                    trackpath_filename = currenthour_dir + date[11:13] + f"_trkpath.txt"
-                    self.tracker.trackpath_filewriter = open(trackpath_filename, "w")
-
-                    cc_filename = currenthour_dir + date[11:13] + "_finalcounts.txt"
-                    self.cc_filewriter = open(cc_filename, "w")
-
-                    print("\n-------cleared class counters-------")
-                    print(f"-------initialized new file for the hour-------{date}\n")
-
-                    if self.output:
-                        compressed_file_name = (
-                            self.video_filename.split(".")[0] + "_comp.avi"
-                        )
-                        t4 = threading.Thread(
-                            target=self._compress_video,
-                            args=(self.video_filename, compressed_file_name, True),
-                        )
-                        t4.start()
-
-                        self.video_filename = currenthour_dir + date[11:13] + ".avi"
-                        self.videowriter = cv2.VideoWriter(
-                            self.video_filename,
-                            cv2.VideoWriter_fourcc("M", "J", "P", "G"),
-                            self.output_fps,
-                            (960, 540),
-                        )
-
-                        print("-------initialized new video for the hour-------\n")
-
-                    flag2 = False
-            else:
-                flag2 = True
-
             frame = cv2.resize(
                 frame,
                 dsize=(self.frame_w, self.frame_h),
                 interpolation=cv2.INTER_LINEAR,
             )
 
-            detection_list = self.detector.detect(frame)
+            detection_list, ped_and_cattles_list = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detection_list)
+
+            for rect in ped_and_cattles_list:
+                cv2.rectangle(frame, rect[:2], rect[2:], (255, 0, 255), 2)
 
             draw_tracked_objects(self, frame, tracked_objects)
 
@@ -372,7 +263,7 @@ class VehicleTracking(object):
             print(frame_count, curr_fps,avg_fps)
 
         if self.output:
-            self._clean_exit(currenthour_dir, currentday_dir)
+            self._clean_exit()
     
         self.vidcap.release()
         cv2.destroyAllWindows()

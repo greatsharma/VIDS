@@ -122,7 +122,7 @@ class BaseDetector(object):
 
     def _postpreprocessing(self, detections):
         detection_list = []
-        axles = []
+        ped_and_cattles = []
 
         for obj_class, obj_prob, obj_bbox in detections:
 
@@ -148,6 +148,10 @@ class BaseDetector(object):
 
             obj_rect = (x1, y1, x2, y2)
 
+            if obj_class in ["pedestrian", "cattles"]:
+                ped_and_cattles.append(obj_rect)
+                continue
+
             obj_bottom = (obj_rect[0] + obj_rect[2])//2, (obj_rect[3])
             lane = self.lane_detector(obj_bottom)
 
@@ -165,4 +169,4 @@ class BaseDetector(object):
 
         detection_list = nonmax_suppression(detection_list, 0.6)
 
-        return detection_list
+        return detection_list, ped_and_cattles

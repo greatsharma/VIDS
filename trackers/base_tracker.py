@@ -210,12 +210,6 @@ class BaseTracker(object):
         return (n1 / d1) + (n2 / d2) <= 1
 
     def _deregister_object(self, obj_id) -> None:
-        txt = f"{obj_id} : {self.objects[obj_id].obj_class[0]}"
-
-        if len(self.objects[obj_id].path) >= 2:
-            txt += f" : {self.objects[obj_id].path}"
-            self.trackpath_filewriter.write(txt + "\n")
-
         del self.objects[obj_id]
 
     def update(self, detection_list: list):
