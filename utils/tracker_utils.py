@@ -51,11 +51,11 @@ def init_direction_detector(camera_meta: dict) -> Callable:
                 pt2, lane2_ref
             )
         elif lane == "3":
-            return distance.euclidean(pt1, lane3_ref) > distance.euclidean(
+            return distance.euclidean(pt1, lane3_ref) < distance.euclidean(
                 pt2, lane3_ref
             )
         else:
-            return distance.euclidean(pt1, lane4_ref) > distance.euclidean(
+            return distance.euclidean(pt1, lane4_ref) < distance.euclidean(
                 pt2, lane4_ref
             )
 
