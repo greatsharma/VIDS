@@ -79,10 +79,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
             else (obj.state[0], obj.state[2])
         )
 
-        (Ax, Ay), (Bx, By) = self.camera_meta[obj.lane]["deregistering_line_rightdirection"]
+        (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["deregistering_line_rightdirection"]
         position1 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
 
-        (Ax, Ay), (Bx, By) = self.camera_meta[obj.lane]["deregistering_line_wrongdirection"]
+        (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["deregistering_line_wrongdirection"]
         position2 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
 
         if (

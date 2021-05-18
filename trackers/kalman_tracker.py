@@ -164,7 +164,7 @@ class KalmanTracker(BaseTracker):
 
                     self.objects[obj_id].continous_presence_count += 1
 
-                    if self.classupdate_line(detected_bottoms[col]) < 0:
+                    if self.classupdate_line(detected_bottoms[col], self.objects[obj_id].lane) < 0:
                         if self.objects[obj_id].obj_class[1] < detected_classes[col][1]:
                             self.objects[obj_id].obj_class = detected_classes[col]
 
