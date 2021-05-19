@@ -105,6 +105,8 @@ class VehicleTracking(object):
             "2": self.camera_meta["lane2"]["angle"],
             "3": self.camera_meta["lane3"]["angle"],
             "4": self.camera_meta["lane4"]["angle"],
+            "5": self.camera_meta["lane5"]["angle"],
+            "6": self.camera_meta["lane6"]["angle"],
         }
         
         velocity_regression = {}
@@ -225,7 +227,7 @@ class VehicleTracking(object):
             draw_tracked_objects(self, frame, tracked_objects)
 
             if self.mode == "debug":
-                for l in [1,2,3,4]:
+                for l in [1,2,3,4,5,6]:
                     cv2.polylines(frame, [self.camera_meta[f"lane{l}"]["lane_coords"]],
                         isClosed=True, color=(0, 0, 0), thickness=1,
                     )

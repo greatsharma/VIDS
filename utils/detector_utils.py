@@ -7,6 +7,8 @@ def init_lane_detector(camera_meta: dict) -> Callable:
     lane2_coords = camera_meta["lane2"]["lane_coords"]
     lane3_coords = camera_meta["lane3"]["lane_coords"]
     lane4_coords = camera_meta["lane4"]["lane_coords"]
+    lane5_coords = camera_meta["lane5"]["lane_coords"]
+    lane6_coords = camera_meta["lane6"]["lane_coords"]
 
     def lane_detector(pt):
         if cv2.pointPolygonTest(lane1_coords, pt, False) == 1:
@@ -17,6 +19,10 @@ def init_lane_detector(camera_meta: dict) -> Callable:
             return "3"
         elif cv2.pointPolygonTest(lane4_coords, pt, False) == 1:
             return "4"
+        elif cv2.pointPolygonTest(lane5_coords, pt, False) == 1:
+            return "5"
+        elif cv2.pointPolygonTest(lane6_coords, pt, False) == 1:
+            return "6"
         else:
             return None
 

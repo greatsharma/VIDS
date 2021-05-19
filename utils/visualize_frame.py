@@ -17,9 +17,17 @@ while vidcap.isOpened():
     frame = cv2.resize(frame, dsize=(width, height), interpolation=cv2.INTER_LINEAR)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+    sideway1_coords = (
+        np.array(
+            [(12, 270), (12, 408), (390, 97), (350, 100)],
+            dtype=np.int32,
+        ).reshape((-1, 1, 2)),
+    )
+    cv2.polylines(frame,sideway1_coords,isClosed=True,color=(0, 0, 0),thickness=2,)
+
     lane1_coords = (
         np.array(
-            [(10, 408), (12, 452), (168, 465), (430, 100), (390, 97)],
+            [(12, 408), (12, 452), (168, 465), (430, 100), (390, 97)],
             dtype=np.int32,
         ).reshape((-1, 1, 2)),
     )
@@ -43,12 +51,21 @@ while vidcap.isOpened():
 
     lane4_coords = (
         np.array(
-            [(801, 426), (950, 417), (950, 364), (630, 105), (574, 105)],
+            [(801, 426), (950, 417), (945, 364), (630, 105), (574, 105)],
             dtype=np.int32,
         ).reshape((-1, 1, 2)),
     )
     cv2.polylines(frame,lane4_coords,isClosed=True,color=(0, 0, 0),thickness=2,)
 
+    sideway2_coords = (
+        np.array(
+            [(945, 364), (935, 270), (670, 105), (630, 105)],
+            dtype=np.int32,
+        ).reshape((-1, 1, 2)),
+    )
+    cv2.polylines(frame,sideway2_coords,isClosed=True,color=(0, 0, 0),thickness=2,)
+
+    cv2.circle(frame,(5, 350),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(56, 497),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(245, 510),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(757, 523),radius=3,color=(255,0,0),thickness=-1)
@@ -59,10 +76,14 @@ while vidcap.isOpened():
     cv2.line(frame, (608,366), (887,359), (255, 255, 255), 2)
     cv2.line(frame, (577,267), (788,265), (255, 255, 255), 2)
 
+    cv2.line(frame, (12, 270), (12, 408), (255, 0, 255), 1)
+    cv2.line(frame, (168,190), (224,231), (255, 0, 255), 2)
     cv2.line(frame, (12, 452), (348, 483), (255, 0, 255), 2)
     cv2.line(frame, (178,297), (401,315), (255, 0, 255), 2)
     cv2.line(frame, (571, 241), (764, 242), (255, 0, 255), 2)
     cv2.line(frame, (604, 354), (874, 345), (255, 0, 255), 2)
+    cv2.line(frame, (768, 218), (800, 185), (255, 0, 255), 2)
+    cv2.line(frame, (945, 364), (935, 270), (255, 0, 255), 1)
 
     cv2.line(frame, (262,218), (427,232), (255, 255, 0), 2)
     cv2.line(frame, (565, 220), (745, 220), (255, 255, 0), 2)

@@ -90,10 +90,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 obj.absent_count > self.max_absent // 2
                 and (obj.state[1], obj.state[3]) == (0, 0)
             )
-            or (obj.lane in ["1", "2"] and obj.direction and position1 > 0)
-            or (obj.lane in ["3", "4"] and obj.direction and position1 < 0)
-            or (obj.lane in ["1", "2"] and not obj.direction and position2 < 0)
-            or (obj.lane in ["3", "4"] and not obj.direction and position2 > 0)
+            or (obj.lane in ["1", "2", "5"] and obj.direction and position1 > 0)
+            or (obj.lane in ["3", "4", "6"] and obj.direction and position1 < 0)
+            or (obj.lane in ["1", "2", "5"] and not obj.direction and position2 < 0)
+            or (obj.lane in ["3", "4", "6"] and not obj.direction and position2 > 0)
             or (
                 obj.absent_count > 2
                 and obj.continous_presence_count < self.min_continous_presence

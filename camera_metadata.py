@@ -7,7 +7,7 @@ CAMERA_METADATA = {
         "lane1": {
 
             "lane_coords": np.array(
-                    [(10, 408), (12, 452), (168, 465), (430, 100), (390, 97)],
+                    [(12, 408), (12, 452), (168, 465), (430, 100), (390, 97)],
                     dtype=np.int32,
                 ).reshape((-1, 1, 2)),
 
@@ -76,7 +76,7 @@ CAMERA_METADATA = {
         "lane4": {
 
             "lane_coords": np.array(
-                    [(801, 426), (950, 417), (950, 364), (630, 105), (574, 105)],
+                    [(801, 426), (950, 417), (945, 364), (630, 105), (574, 105)],
                     dtype=np.int32,
                 ).reshape((-1, 1, 2)),
 
@@ -87,6 +87,48 @@ CAMERA_METADATA = {
             "countinterval": [(577,267), (788,265), (608,366), (887,359)],
 
             "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
+
+            "deregistering_line_rightdirection": [(810,436), (957,424)],
+
+            "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
+
+            "angle": -0.852,
+
+        },
+
+        "lane5": {
+
+            "lane_coords": np.array(
+                    [(12, 270), (12, 408), (390, 97), (350, 100)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
+
+            "lane_ref": (5, 350),
+
+            "mid_ref": [(262,218), (427,232)],
+
+            "classupdate_line": [(12, 270), (12, 408), (168,190), (224,231)],
+
+            "deregistering_line_rightdirection": [(395,93), (471,98)],
+
+            "deregistering_line_wrongdirection": [(6,458), (345,494)],
+
+            "angle": 0.86,
+
+        },
+
+        "lane6": {
+
+            "lane_coords": np.array(
+                    [(945, 364), (935, 270), (670, 105), (630, 105)],
+                    dtype=np.int32,
+                ).reshape((-1, 1, 2)),
+
+            "lane_ref": (954, 319),
+
+            "mid_ref": [(565, 220), (745, 220)],
+
+            "classupdate_line": [(768, 218), (800, 185), (945, 364), (935, 270)],
 
             "deregistering_line_rightdirection": [(810,436), (957,424)],
 

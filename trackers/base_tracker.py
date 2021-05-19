@@ -95,14 +95,7 @@ class BaseTracker(object):
             if detection["obj_class"][0] in k:
                 semi_majoraxis = v
 
-        if detection["lane"] == "1":
-            angle = 180 - math.degrees(self.lane_angles["1"])
-        elif detection["lane"] == "2":
-            angle = 180 - math.degrees(self.lane_angles["2"])
-        elif detection["lane"] == "3":
-            angle = 180 - math.degrees(self.lane_angles["3"])
-        else:
-            angle = 180 - math.degrees(self.lane_angles["4"])
+        angle = 180 - math.degrees(self.lane_angles[detection["lane"]])
 
         self.objects[self.next_objid].angle_range = [
             angle - angle * 0.25,
