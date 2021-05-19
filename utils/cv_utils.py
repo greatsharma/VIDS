@@ -90,10 +90,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 obj.absent_count > self.max_absent // 2
                 and (obj.state[1], obj.state[3]) == (0, 0)
             )
-            or (obj.lane in ["1", "2", "5"] and obj.direction and position1 > 0)
-            or (obj.lane in ["3", "4", "6"] and obj.direction and position1 < 0)
-            or (obj.lane in ["1", "2", "5"] and not obj.direction and position2 < 0)
-            or (obj.lane in ["3", "4", "6"] and not obj.direction and position2 > 0)
+            or (obj.lane in ["1", "2", "5"] and obj.direction in ["right", "parked"] and position1 > 0)
+            or (obj.lane in ["3", "4", "6"] and obj.direction in ["right", "parked"] and position1 < 0)
+            or (obj.lane in ["1", "2", "5"] and obj.direction == "wrong" and position2 < 0)
+            or (obj.lane in ["3", "4", "6"] and obj.direction == "wrong" and position2 > 0)
             or (
                 obj.absent_count > 2
                 and obj.continous_presence_count < self.min_continous_presence
@@ -117,41 +117,28 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         condition = path_length < 30
 
-        if obj.direction:
-            if condition:
-                txt = str(obj.objid) + ": " + obj.obj_class[0]
-            else:
-                txt = obj.obj_class[0]
-
-            draw_text_with_backgroud(
-                frame,
-                txt,
-                x,
-                y,
-                font_scale=0.35,
-                thickness=1,
-                box_coords_1=(-4, 4),
-                box_coords_2=(6, -6),
-            )
-        else:
+        to_write = obj.obj_class[0]
+        if obj.direction == "parked":
+            to_write = "parked"
+        elif obj.direction == "wrong":
+            to_write = "wrong-way"
             base_color = [0, 0, 255]
 
-            if condition:
-                txt = str(obj.objid) + ": " + "wrong-way"
-            else:
-                txt = "wrong-way"
+        if condition:
+            txt = str(obj.objid) + ": " + to_write
+        else:
+            txt = to_write
 
-            draw_text_with_backgroud(
-                frame,
-                txt,
-                x,
-                y,
-                font_scale=0.35,
-                thickness=1,
-                foreground=(0, 0, 255),
-                box_coords_1=(-4, 4),
-                box_coords_2=(6, -6),
-            )
+        draw_text_with_backgroud(
+            frame,
+            txt,
+            x,
+            y,
+            font_scale=0.35,
+            thickness=1,
+            box_coords_1=(-4, 4),
+            box_coords_2=(6, -6),
+        )
 
         if path_length <= self.max_track_pts:
             path = obj.path

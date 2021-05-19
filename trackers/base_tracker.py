@@ -84,7 +84,7 @@ class BaseTracker(object):
             detection["obj_bottom"],
             detection["rect"],
             detection["lane"],
-            True,
+            "right",
             [],
             detection["obj_class"],
         )
@@ -170,7 +170,7 @@ class BaseTracker(object):
                     int(self.objects[obj_id].eos.semi_majoraxis / 2), 20
                 )
 
-        if self.objects[obj_id].direction:
+        if self.objects[obj_id].direction == "right":
             n = self.objects[obj_id].eos.last_d * 2
             m = -self.objects[obj_id].eos.last_d * 1
         else:

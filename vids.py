@@ -343,7 +343,7 @@ if __name__ == "__main__":
         "--max_track_points",
         type=int,
         required=False,
-        default=50,
+        default=40,
         help="maximum points to be tracked for a vehicle",
     )
 

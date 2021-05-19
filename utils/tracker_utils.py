@@ -56,29 +56,29 @@ def init_direction_detector(camera_meta: dict) -> Callable:
 
     def direction_detector(lane, pt1, pt2):
         if lane == "1":
-            return distance.euclidean(pt1, lane1_ref) > distance.euclidean(
+            return distance.euclidean(pt1, lane1_ref) - distance.euclidean(
                 pt2, lane1_ref
             )
 
         elif lane == "2":
-            return distance.euclidean(pt1, lane2_ref) > distance.euclidean(
+            return distance.euclidean(pt1, lane2_ref) - distance.euclidean(
                 pt2, lane2_ref
             )
         elif lane == "3":
-            return distance.euclidean(pt1, lane3_ref) < distance.euclidean(
-                pt2, lane3_ref
+            return distance.euclidean(pt2, lane3_ref) - distance.euclidean(
+                pt1, lane3_ref
             )
         elif lane == "4":
-            return distance.euclidean(pt1, lane4_ref) < distance.euclidean(
-                pt2, lane4_ref
+            return distance.euclidean(pt2, lane4_ref) - distance.euclidean(
+                pt1, lane4_ref
             )
         elif lane == "5":
-            return distance.euclidean(pt1, lane5_ref) > distance.euclidean(
+            return distance.euclidean(pt1, lane5_ref) - distance.euclidean(
                 pt2, lane5_ref
             )
         elif lane == "6":
-            return distance.euclidean(pt1, lane6_ref) < distance.euclidean(
-                pt2, lane6_ref
+            return distance.euclidean(pt2, lane6_ref) - distance.euclidean(
+                pt1, lane6_ref
             )
 
     return direction_detector
