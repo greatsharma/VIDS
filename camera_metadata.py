@@ -23,8 +23,6 @@ CAMERA_METADATA = {
     
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
-            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
-
             "angle": 0.86,
 
         },
@@ -47,8 +45,6 @@ CAMERA_METADATA = {
             "deregistering_line_rightdirection": [(395,93), (471,98)],
 
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
-
-            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
 
             "angle": 1.102,
 
@@ -73,8 +69,6 @@ CAMERA_METADATA = {
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
-            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
-
             "angle": -1.107,
 
         },
@@ -98,8 +92,6 @@ CAMERA_METADATA = {
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
-            "lane_annotation_data": [(423,88), (423,66), (380, 66), 250, 490],
-
             "angle": -0.852,
 
         },
@@ -115,5 +107,4 @@ CAMERA_METADATA = {
 
 if __name__ == "__main__":
     from pprint import pprint
-
     pprint(CAMERA_METADATA)
