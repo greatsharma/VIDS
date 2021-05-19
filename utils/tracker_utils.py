@@ -24,12 +24,12 @@ def init_classupdate_line(camera_meta: dict) -> Callable:
         elif lane == "3":
             position1 = (Px - A3x) * (B3y - A3y) - (Py - A3y) * (B3x - A3x)
             position2 = (Px - C3x) * (D3y - C3y) - (Py - C3y) * (D3x - C3x)
-            return position1 > 0 and position2 < 0
+            return position1 < 0 and position2 > 0
 
         else:
             position1 = (Px - A4x) * (B4y - A4y) - (Py - A4y) * (B4x - A4x)
             position2 = (Px - C4x) * (D4y - C4y) - (Py - C4y) * (D4x - C4x)
-            return position1 > 0 and position2 < 0
+            return position1 < 0 and position2 > 0
 
     return within_interval
 
