@@ -1,11 +1,12 @@
 import cv2
 import math
+import numpy as np
 
 
 CLASS_COLOR = {
     "pedestrian": (255, 0, 255),
     "cattles": (255, 255, 0),
-    "tw": (0, 255, 255),
+    "tw": (0,140,255),
     "auto": (100, 0, 100),
     "lmv": (0, 255, 0),
     "hmv": (255, 0, 0),
@@ -113,10 +114,6 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
-        path_length = len(obj.path)
-
-        condition = path_length < 30
-
         to_write = obj.obj_class[0]
         if obj.direction == "parked":
             to_write = "parked"
@@ -124,21 +121,28 @@ def draw_tracked_objects(self, frame, tracked_objs):
             to_write = "wrong-way"
             base_color = [0, 0, 255]
 
+        path_length = len(obj.path)
+        condition = path_length < 20
+        
+        if not condition:
+            (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"]
+            position1 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
+            if position1 < 0:
+                condition = True
+            
         if condition:
             txt = str(obj.objid) + ": " + to_write
-        else:
-            txt = to_write
 
-        draw_text_with_backgroud(
-            frame,
-            txt,
-            x,
-            y,
-            font_scale=0.35,
-            thickness=1,
-            box_coords_1=(-4, 4),
-            box_coords_2=(6, -6),
-        )
+            draw_text_with_backgroud(
+                frame,
+                txt,
+                x,
+                y,
+                font_scale=0.35,
+                thickness=1,
+                box_coords_1=(-4, 4),
+                box_coords_2=(6, -6),
+            )
 
         if path_length <= self.max_track_pts:
             path = obj.path
@@ -146,16 +150,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
             path = obj.path[path_length - self.max_track_pts :]
 
         prev_point = None
-        for pt in path:
+        for pt, perc, size in zip(path, np.linspace(0.25, 0.6, path_length), [1]*10 + [2]*15 + [3]*15):
             if not prev_point is None:
-                cv2.line(
-                    frame,
-                    (prev_point[0], prev_point[1]),
-                    (pt[0], pt[1]),
-                    base_color,
-                    thickness=2,
-                    lineType=8,
-                )
+                color = tuple(np.array(base_color)*(1-perc))
+                cv2.line(frame, (prev_point[0], prev_point[1]), (pt[0], pt[1]), color, thickness=size, lineType=8)
             prev_point = pt
 
         centre = obj.eos.centre
