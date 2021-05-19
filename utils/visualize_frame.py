@@ -19,7 +19,7 @@ while vidcap.isOpened():
 
     sideway1_coords = (
         np.array(
-            [(12, 270), (12, 408), (390, 97), (350, 100)],
+            [(12, 270), (12, 408), (366, 115), (300, 115)],
             dtype=np.int32,
         ).reshape((-1, 1, 2)),
     )
@@ -59,7 +59,7 @@ while vidcap.isOpened():
 
     sideway2_coords = (
         np.array(
-            [(945, 364), (935, 270), (670, 105), (630, 105)],
+            [(945, 364), (935, 270), (720, 128), (658, 128)],
             dtype=np.int32,
         ).reshape((-1, 1, 2)),
     )
