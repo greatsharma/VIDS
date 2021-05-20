@@ -103,12 +103,11 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
-        if len(obj.speeds) < 2 and obj.direction == "right" and obj.lane in ["1", "2"]:
+        if obj.speed == 0 and obj.direction == "right" and obj.lane in ["1", "2", "3", "4"]:
             self.speed_detector(obj)
-            print(obj.framecount_speedrefs, obj.speeds)
 
-        if len(obj.speeds) and obj.speeds[-1]:
-            to_write = str(obj.speeds[-1]) + ", kmph"
+        if obj.speed:
+            to_write = str(obj.speed) + ", kmph"
         else:
             to_write = obj.obj_class[0]
     

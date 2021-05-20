@@ -115,9 +115,11 @@ while vidcap.isOpened():
     print(angle)
     cv2.arrowedLine(frame, pt1, pt2, color=(0,0,255), thickness=2, tipLength=0.03)
 
-    cv2.line(frame, (28,395), (361,444), (255, 0, 0), 1)
-    cv2.line(frame, (0,301), (1812,540), (255, 0, 0), 1)
-    cv2.line(frame, (0,238), (2285,540), (255, 0, 0), 1)
+    cv2.line(frame, (50,362), (400,362), (255, 0, 0), 1)
+    cv2.line(frame, (50,278), (420,278), (255, 0, 0), 1)
+
+    cv2.line(frame, (550,266), (850,266), (255, 0, 0), 1)
+    cv2.line(frame, (600,364), (950,364), (255, 0, 0), 1)
 
     plt.imshow(frame)
     plt.show()

@@ -35,7 +35,7 @@ class VehicleObject(object):
         self.endtime = None
 
         self.framecount_speedrefs = []
-        self.speeds = []
+        self.speed = 0
 
         self.axles = []  # only for trucks
         self.axle_config = None

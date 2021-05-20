@@ -23,7 +23,7 @@ CAMERA_METADATA = {
     
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
-            "speed_reflines": [[(28,395), (361,444)], [(0,301), (1812,540)], [(0,238), (2285,540)]],
+            "speed_reflines": [[(50,362), (400,362)], [(50,278), (420,278)]],
 
             "angle": 0.86,
 
@@ -48,7 +48,7 @@ CAMERA_METADATA = {
 
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
-            "speed_reflines": [[(28,395), (361,444)], [(0,301), (1812,540)], [(0,238), (2285,540)]],
+            "speed_reflines": [[(50,362), (400,362)], [(50,278), (420,278)]],
 
             "angle": 1.102,
 
@@ -73,6 +73,8 @@ CAMERA_METADATA = {
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
+            "speed_reflines": [[(550,266), (850,266)], [(600,364), (950,364)]],
+
             "angle": -1.107,
 
         },
@@ -95,6 +97,8 @@ CAMERA_METADATA = {
             "deregistering_line_rightdirection": [(810,436), (957,424)],
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
+
+            "speed_reflines": [[(550,266), (850,266)], [(600,364), (950,364)]],
 
             "angle": -0.852,
 
