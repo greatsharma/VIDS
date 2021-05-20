@@ -103,7 +103,15 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
-        to_write = obj.obj_class[0]
+        if len(obj.speeds) < 2 and obj.direction == "right" and obj.lane in ["1", "2"]:
+            self.speed_detector(obj)
+            print(obj.framecount_speedrefs, obj.speeds)
+
+        if len(obj.speeds) and obj.speeds[-1]:
+            to_write = str(obj.speeds[-1]) + ", kmph"
+        else:
+            to_write = obj.obj_class[0]
+    
         if obj.direction == "parked":
             to_write = "parked"
         elif obj.direction == "wrong":

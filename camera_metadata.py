@@ -23,6 +23,8 @@ CAMERA_METADATA = {
     
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
+            "speed_reflines": [[(28,395), (361,444)], [(0,301), (1812,540)], [(0,238), (2285,540)]],
+
             "angle": 0.86,
 
         },
@@ -45,6 +47,8 @@ CAMERA_METADATA = {
             "deregistering_line_rightdirection": [(395,93), (471,98)],
 
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
+
+            "speed_reflines": [[(28,395), (361,444)], [(0,301), (1812,540)], [(0,238), (2285,540)]],
 
             "angle": 1.102,
 

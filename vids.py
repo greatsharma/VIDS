@@ -12,7 +12,7 @@ from camera_metadata import CAMERA_METADATA
 from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
 from utils import draw_tracked_objects
-from utils import init_lane_detector, init_direction_detector, init_classupdate_line
+from utils import init_lane_detector, init_direction_detector, init_classupdate_line, init_speed_detector
 
 
 class VehicleTracking(object):
@@ -53,6 +53,8 @@ class VehicleTracking(object):
         self.min_continous_presence = min_continous_presence
         self.direction_detector_interval = direction_detector_interval
         self.mode = mode
+
+        self.speed_detector = init_speed_detector(self.camera_meta)
 
         self.vidcap = cv2.VideoCapture(self.input_path)
 
@@ -227,7 +229,7 @@ class VehicleTracking(object):
             draw_tracked_objects(self, frame, tracked_objects)
 
             if self.mode == "debug":
-                for l in [1,2,3,4,5,6]:
+                for l in [1,2]:
                     cv2.polylines(frame, [self.camera_meta[f"lane{l}"]["lane_coords"]],
                         isClosed=True, color=(0, 0, 0), thickness=1,
                     )
@@ -247,6 +249,11 @@ class VehicleTracking(object):
 
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
                     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
+
+                    ref1, ref2, ref3 = self.camera_meta[f"lane{l}"]["speed_reflines"]
+                    cv2.line(frame, ref1[0], ref1[1], (0, 0, 255), 1)
+                    cv2.line(frame, ref2[0], ref2[1], (0, 0, 255), 1)
+                    cv2.line(frame, ref3[0], ref3[1], (0, 0, 255), 1)
 
             if self.output:
                 self.videowriter.write(frame)

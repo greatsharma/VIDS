@@ -59,7 +59,6 @@ def init_direction_detector(camera_meta: dict) -> Callable:
             return distance.euclidean(pt1, lane1_ref) - distance.euclidean(
                 pt2, lane1_ref
             )
-
         elif lane == "2":
             return distance.euclidean(pt1, lane2_ref) - distance.euclidean(
                 pt2, lane2_ref
@@ -82,3 +81,50 @@ def init_direction_detector(camera_meta: dict) -> Callable:
             )
 
     return direction_detector
+
+
+def init_speed_detector(camera_meta: dict) -> Callable:
+    lane1_ref1, lane1_ref2, lane1_ref3 = camera_meta["lane1"]["speed_reflines"]
+    lane2_ref1, lane2_ref2, lane2_ref3 = camera_meta["lane2"]["speed_reflines"]
+
+    lane_refs = {
+        "lane1": {
+            "ref1": lane1_ref1,
+            "ref2": lane1_ref2,
+            "ref3": lane1_ref3,
+        },
+        "lane2": {
+            "ref1": lane2_ref1,
+            "ref2": lane2_ref2,
+            "ref3": lane2_ref3,
+        },
+    }
+
+    def speed_detector(obj):        
+        l = len(obj.framecount_speedrefs)
+        
+        Px,Py = obj.path[-1]
+        
+        if l == 0:
+            (A1x, A1y), (B1x, B1y) = lane_refs[f"lane{obj.lane}"]["ref2"]
+            position = (Px - A1x) * (B1y - A1y) - (Py - A1y) * (B1x - A1x)
+
+            if position > 0:
+                obj.speeds.extend([None,None])
+                obj.framecount_speedrefs.extend([None,None,None])
+                return
+
+        (A1x, A1y), (B1x, B1y) = lane_refs[f"lane{obj.lane}"][f"ref{l+1}"]
+        position = (Px - A1x) * (B1y - A1y) - (Py - A1y) * (B1x - A1x)
+
+        if position > 0:
+            obj.framecount_speedrefs.append(len(obj.path))
+        
+        l = len(obj.framecount_speedrefs)
+        if (l - len(obj.speeds))==2:
+            speed = 9 / (obj.framecount_speedrefs[-1] - obj.framecount_speedrefs[-2]) # speed in meter/frame
+            speed /= (0.0625) # speed in meter/seconds, 1/16 = 0.0625, 16 is input-fps
+            speed *= 3.6 # speed in kmph
+            obj.speeds.append(int(speed))
+
+    return speed_detector
