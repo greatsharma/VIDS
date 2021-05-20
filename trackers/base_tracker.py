@@ -16,16 +16,18 @@ class EllipseofSearch(object):
 
 class VehicleObject(object):
     def __init__(
-        self, objid, obj_bottom, rect, lane, direction, path, obj_class
+        self, objid, obj_bottom, rect, lane, obj_class
     ) -> None:
 
         self.objid = objid
         self.obj_bottom = obj_bottom
         self.rect = rect
         self.lane = lane
-        self.direction = direction
-        self.path = path
         self.obj_class = obj_class
+
+        self.direction = "right"
+        self.path = []
+        self.obj_rects = []
         self.absent_count = 0
         self.continous_presence_count = 1
 
@@ -84,12 +86,11 @@ class BaseTracker(object):
             detection["obj_bottom"],
             detection["rect"],
             detection["lane"],
-            "right",
-            [],
             detection["obj_class"],
         )
 
         self.objects[self.next_objid].path.append(detection["obj_bottom"])
+        self.objects[self.next_objid].obj_rects.append(detection["rect"])
 
         for k, v in self.initial_maxdistances.items():
             if detection["obj_class"][0] in k:
@@ -201,6 +202,60 @@ class BaseTracker(object):
         d2 = b * b
 
         return (n1 / d1) + (n2 / d2) <= 1
+
+    def _detect_direction(self, obj_id):
+        if len(self.objects[obj_id].path) > self.direction_detector_interval:
+            dist = self.direction_detector(
+                self.objects[obj_id].lane,
+                self.objects[obj_id].path[-1],
+                self.objects[obj_id].path[-self.direction_detector_interval],
+            )
+            if dist >= 0:
+                self.objects[obj_id].direction = "right"
+            else:
+                self.objects[obj_id].direction = "wrong"
+
+            if self.objects[obj_id].direction == "wrong":
+                upper_coord1 = self.objects[obj_id].path[-1]
+                upper_coord2 = self.objects[obj_id].path[-self.direction_detector_interval]
+
+                if upper_coord1 and upper_coord2:
+                    dist = self.direction_detector(
+                        self.objects[obj_id].lane,
+                        upper_coord1,
+                        upper_coord2,
+                    )
+
+                    if dist >= 0:
+                        self.objects[obj_id].direction = "right"
+
+            if len(self.objects[obj_id].path) > 2*self.direction_detector_interval:
+                dist = self.direction_detector(
+                    self.objects[obj_id].lane,
+                    self.objects[obj_id].path[-1],
+                    self.objects[obj_id].path[-2*self.direction_detector_interval],
+                )
+
+                if abs(dist) <= 5:
+                    self.objects[obj_id].direction = "parked"
+
+                if self.objects[obj_id].direction != "parked":
+                    rect_coords1 = self.objects[obj_id].obj_rects[-1]
+                    rect_coords2 = self.objects[obj_id].obj_rects[-2*self.direction_detector_interval]
+
+                    if rect_coords1 and rect_coords2:
+                        upper_coord1 = (rect_coords1[0] + rect_coords1[2]) // 2, rect_coords1[1]
+                        upper_coord2 = (rect_coords2[0] + rect_coords2[2]) // 2, rect_coords2[1]
+
+                        dist = self.direction_detector(
+                            self.objects[obj_id].lane,
+                            upper_coord1,
+                            upper_coord2,
+                        )
+
+                        if abs(dist) <= 5:
+                            self.objects[obj_id].direction = "parked"
+
 
     def _deregister_object(self, obj_id) -> None:
         del self.objects[obj_id]

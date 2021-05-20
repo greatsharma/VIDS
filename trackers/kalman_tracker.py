@@ -107,6 +107,7 @@ class KalmanTracker(BaseTracker):
                 self.objects[obj_id].path.append(
                     (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
                 )
+                self.objects[obj_id].obj_rects.append(None)
 
                 self._update_eos(obj_id, lost=True)
 
@@ -162,31 +163,14 @@ class KalmanTracker(BaseTracker):
                         if self.objects[obj_id].obj_class[1] < detected_classes[col][1]:
                             self.objects[obj_id].obj_class = detected_classes[col]
 
-                    if len(self.objects[obj_id].path) > self.direction_detector_interval:
-                        dist = self.direction_detector(
-                            self.objects[obj_id].lane,
-                            self.objects[obj_id].path[-1],
-                            self.objects[obj_id].path[-self.direction_detector_interval],
-                        )
-                        if dist >= 0:
-                            self.objects[obj_id].direction = "right"
-                        else:
-                            self.objects[obj_id].direction = "wrong"
-
-                        if len(self.objects[obj_id].path) > 2*self.direction_detector_interval:
-                            dist = self.direction_detector(
-                                self.objects[obj_id].lane,
-                                self.objects[obj_id].path[-1],
-                                self.objects[obj_id].path[-2*self.direction_detector_interval],
-                            )
-                            if abs(dist) <= 4:
-                                self.objects[obj_id].direction = "parked"
-
                     self.objects[obj_id].path.append(
                         (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
                     )
+                    self.objects[obj_id].obj_rects.append(detected_rects[col])
 
                     self.objects[obj_id].lastdetected_state = self.objects[obj_id].state
+
+                    self._detect_direction(obj_id)
 
                     self._update_eos(obj_id)
 
@@ -208,6 +192,7 @@ class KalmanTracker(BaseTracker):
                     self.objects[obj_id].path.append(
                         (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
                     )
+                    self.objects[obj_id].obj_rects.append(None)
 
                     self._update_eos(obj_id, lost=True)
 

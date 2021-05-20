@@ -49,21 +49,6 @@ def draw_text_with_backgroud(
     )
 
 
-def checkpoint(h, k, x, y, a, b, angle):
-    angle = math.radians(angle)
-
-    cosa = math.cos(angle)
-    sina = math.sin(angle)
-
-    n1 = math.pow(cosa * (x - h) + sina * (y - k), 2)
-    n2 = math.pow(sina * (x - h) - cosa * (y - k), 2)
-
-    d1 = a * a
-    d2 = b * b
-
-    return (n1 / d1) + (n2 / d2)
-
-
 def draw_tracked_objects(self, frame, tracked_objs):
     global CLASS_COLOR
 
@@ -110,7 +95,11 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         if obj.absent_count == 0:
             x, y = obj_centroid[0] - 10, obj_centroid[1]
-            cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
+            if obj.direction != "wrong":
+                cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
+            else:
+                base_color = [0, 0, 255]
+                cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
@@ -119,7 +108,6 @@ def draw_tracked_objects(self, frame, tracked_objs):
             to_write = "parked"
         elif obj.direction == "wrong":
             to_write = "wrong-way"
-            base_color = [0, 0, 255]
 
         path_length = len(obj.path)
         condition = path_length < 20
@@ -131,11 +119,12 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 condition = True
             
         if condition:
-            txt = str(obj.objid) + ": " + to_write
+            # if to_write != "parked":
+            #     to_write = str(obj.objid) + ": " + to_write
 
             draw_text_with_backgroud(
                 frame,
-                txt,
+                to_write,
                 x,
                 y,
                 font_scale=0.35,
@@ -156,12 +145,11 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 cv2.line(frame, (prev_point[0], prev_point[1]), (pt[0], pt[1]), color, thickness=size, lineType=8)
             prev_point = pt
 
-        centre = obj.eos.centre
-        semi_majoraxis = obj.eos.semi_majoraxis
-        semi_minoraxis = obj.eos.semi_minoraxis
-        angle = obj.eos.angle
-
         if self.mode == "debug":
+            centre = obj.eos.centre
+            semi_majoraxis = obj.eos.semi_majoraxis
+            semi_minoraxis = obj.eos.semi_minoraxis
+            angle = obj.eos.angle
             cv2.circle(frame, centre, radius=3, color=(0, 255, 0), thickness=-1)
             cv2.circle(frame, obj_bottom, radius=3, color=(0, 0, 255), thickness=-1)
             cv2.ellipse(
@@ -174,12 +162,6 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 color=base_color,
                 thickness=1,
             )
-
-        # v = checkpoint(centre[0], centre[1], obj_bottom[0], obj_bottom[1], semi_majoraxis, semi_minoraxis, angle)
-        # if v > 1:
-        #     print(f"objid: {obj.objid}, v: {v}, out\n\n")
-        # elif v == 1:
-        #     print(f"objid: {obj.objid}, v: {v}, on\n\n")
 
     for obj_id in to_deregister:
         self.tracker._deregister_object(obj_id)

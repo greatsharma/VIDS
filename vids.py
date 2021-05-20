@@ -143,7 +143,7 @@ class VehicleTracking(object):
                 "-vcodec",
                 "libx264",
                 "-crf",
-                "24",
+                "30",
                 output_path,
                 "-hide_banner",
                 "-loglevel",
@@ -370,7 +370,7 @@ if __name__ == "__main__":
         "--direction_detector_interval",
         type=int,
         required=False,
-        default=20,
+        default=25,
         help="interval between two frames for direction detection",
     )
 
