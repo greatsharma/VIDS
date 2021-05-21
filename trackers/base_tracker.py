@@ -63,8 +63,8 @@ class BaseTracker(object):
         direction_detector_interval: int,
         initial_maxdistances: dict,
         classupdate_line: Callable,
+        pos_wrt_midrefs__detector: Callable,
         lane_angles: dict,
-        velocity_regression: dict,
         max_absent: int,
     ) -> None:
 
@@ -73,8 +73,8 @@ class BaseTracker(object):
         self.direction_detector_interval = direction_detector_interval
         self.initial_maxdistances = initial_maxdistances
         self.classupdate_line = classupdate_line
+        self.pos_wrt_midrefs__detector = pos_wrt_midrefs__detector
         self.lane_angles = lane_angles
-        self.velocity_regression = velocity_regression
         self.max_absent = max_absent
 
         self.next_objid = 0
@@ -97,7 +97,8 @@ class BaseTracker(object):
 
         for k, v in self.initial_maxdistances.items():
             if detection["obj_class"][0] in k:
-                semi_majoraxis = v
+                pos = self.pos_wrt_midrefs__detector(detection["lane"], detection["obj_bottom"])
+                semi_majoraxis = v[pos]
 
         angle = 180 - math.degrees(self.lane_angles[detection["lane"]])
 
@@ -110,7 +111,7 @@ class BaseTracker(object):
         if detection["obj_class"][0] in "hmv":
             semi_minoraxis = int(semi_majoraxis / 1.5)
         else:
-            semi_minoraxis = int(semi_majoraxis / 2.5)
+            semi_minoraxis = int(semi_majoraxis / 2)
 
         self.objects[self.next_objid].eos = EllipseofSearch(
             detection["obj_bottom"], semi_majoraxis, semi_minoraxis, angle

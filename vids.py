@@ -4,7 +4,6 @@ import sys
 import time
 import argparse
 import datetime
-import threading
 import subprocess
 import numpy as np
 
@@ -12,7 +11,8 @@ from camera_metadata import CAMERA_METADATA
 from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
 from utils import draw_tracked_objects
-from utils import init_lane_detector, init_direction_detector, init_classupdate_line, init_speed_detector
+from utils import init_lane_detector, init_direction_detector, init_classupdate_line
+from utils import init_position_wrt_midrefs, init_speed_detector
 
 
 class VehicleTracking(object):
@@ -99,7 +99,8 @@ class VehicleTracking(object):
         lane_detector = init_lane_detector(self.camera_meta)
         direction_detector = init_direction_detector(self.camera_meta)
         classupdate_line = init_classupdate_line(self.camera_meta)
-
+        pos_wrt_midrefs__detector = init_position_wrt_midrefs(self.camera_meta)
+        
         initial_maxdistances = self.camera_meta["initial_maxdistances"]
 
         lane_angles = {
@@ -110,8 +111,6 @@ class VehicleTracking(object):
             "5": self.camera_meta["lane5"]["angle"],
             "6": self.camera_meta["lane6"]["angle"],
         }
-        
-        velocity_regression = {}
 
         if self.tracker_type == "centroid":
             self.tracker = CentroidTracker(
@@ -120,8 +119,8 @@ class VehicleTracking(object):
                 self.direction_detector_interval,
                 initial_maxdistances,
                 classupdate_line,
+                pos_wrt_midrefs__detector,
                 lane_angles,
-                velocity_regression,
                 self.max_absent,
             )
         else:
@@ -131,8 +130,8 @@ class VehicleTracking(object):
                 self.direction_detector_interval,
                 initial_maxdistances,
                 classupdate_line,
+                pos_wrt_midrefs__detector,
                 lane_angles,
-                velocity_regression,
                 self.max_absent,
             )
 
@@ -236,9 +235,6 @@ class VehicleTracking(object):
                     cv2.circle(frame, self.camera_meta[f"lane{l}"]["lane_ref"],
                         radius=3, color=(0, 0, 255), thickness=-1,
                     )
-
-                    pt1,pt2 = self.camera_meta[f"lane{l}"]["mid_ref"]
-                    cv2.line(frame, pt1, pt2, (0, 0, 255), 1)
 
                     pt1, pt2, pt3, pt4 = self.camera_meta[f"lane{l}"]["classupdate_line"]
                     cv2.line(frame, pt1, pt2, (255, 0, 255), 1)

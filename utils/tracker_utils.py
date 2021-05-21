@@ -46,6 +46,34 @@ def init_classupdate_line(camera_meta: dict) -> Callable:
     return within_interval
 
 
+def init_position_wrt_midrefs(camera_meta: dict) -> Callable:
+    lane_refs = {f"{l}": {f"ref{r}": camera_meta[f"lane{l}"]["mid_ref"][r-1] for r in [1,2,3]} for l in [1,2,3,4,5,6]}
+
+    def pos_wrt_midrefs__detector(lane, pt):
+
+        (Ax, Ay), (Bx, By) = lane_refs[lane]["ref1"]
+        position_wrt_midref = (pt[0] - Ax) * (By - Ay) - (pt[1] - Ay) * (Bx - Ax)
+
+        if position_wrt_midref < 0:
+            return 0
+
+        (Ax, Ay), (Bx, By) = lane_refs[lane]["ref2"]
+        position_wrt_midref = (pt[0] - Ax) * (By - Ay) - (pt[1] - Ay) * (Bx - Ax)
+        
+        if position_wrt_midref < 0:
+            return 1
+
+        (Ax, Ay), (Bx, By) = lane_refs[lane]["ref3"]
+        position_wrt_midref = (pt[0] - Ax) * (By - Ay) - (pt[1] - Ay) * (Bx - Ax)
+        
+        if position_wrt_midref < 0:
+            return 2
+
+        return 3
+
+    return pos_wrt_midrefs__detector
+
+
 def init_direction_detector(camera_meta: dict) -> Callable:
     lane1_ref = camera_meta["lane1"]["lane_ref"]
     lane2_ref = camera_meta["lane2"]["lane_ref"]
@@ -84,29 +112,7 @@ def init_direction_detector(camera_meta: dict) -> Callable:
 
 
 def init_speed_detector(camera_meta: dict) -> Callable:
-    lane1_ref1, lane1_ref2 = camera_meta["lane1"]["speed_reflines"]
-    lane2_ref1, lane2_ref2 = camera_meta["lane2"]["speed_reflines"]
-    lane3_ref1, lane3_ref2 = camera_meta["lane3"]["speed_reflines"]
-    lane4_ref1, lane4_ref2 = camera_meta["lane4"]["speed_reflines"]
-
-    lane_refs = {
-        "lane1": {
-            "ref1": lane1_ref1,
-            "ref2": lane1_ref2,
-        },
-        "lane2": {
-            "ref1": lane2_ref1,
-            "ref2": lane2_ref2,
-        },
-        "lane3": {
-            "ref1": lane3_ref1,
-            "ref2": lane3_ref2,
-        },
-        "lane4": {
-            "ref1": lane4_ref1,
-            "ref2": lane4_ref2,
-        },
-    }
+    lane_refs = {f"lane{l}": {f"ref{r}": camera_meta[f"lane{l}"]["speed_reflines"][r-1] for r in [1,2]} for l in [1,2,3,4]}
 
     # meterdistance_between_interval
     interval_dist = {
