@@ -46,7 +46,7 @@ class KalmanTracker(BaseTracker):
 
             # updating state, x' = x + v.dt + u
             x = F * x  # + u
-            x = tuple(x.astype(int).ravel().tolist()[0])
+            x = tuple(x.ravel().tolist()[0])
 
             if lost and self.objects[obj_id].direction in ["right", "parked"]:
                 x = list(x)
@@ -59,15 +59,19 @@ class KalmanTracker(BaseTracker):
                 ]
                 pt2 = [x[0], -x[2]]
                 angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
-                angle = self.lane_angles[objlane] - angle
+
+                if objlane in ["1", "2", "5"]:
+                    angle = self.lane_angles[objlane] - angle
+                else:
+                    angle = -self.lane_angles[objlane] - angle
 
                 c = math.cos(angle)
                 s = math.sin(angle)
                 pt2[0] -= pt1[0]
                 pt2[1] -= pt1[1]
 
-                x[0] = int(pt1[0] + c * pt2[0] - s * pt2[1])
-                x[2] = -int(pt1[1] + s * pt2[0] + c * pt2[1])
+                x[0] = pt1[0] + c * pt2[0] - s * pt2[1]
+                x[2] = -pt1[1] + s * pt2[0] + c * pt2[1]
 
                 x = tuple(x)
 
@@ -94,7 +98,7 @@ class KalmanTracker(BaseTracker):
 
             self.objects[obj_id].P = (IKH * P_ * IKH.T) + (K * R * K.T)
 
-            x = tuple(x.astype(int).ravel().tolist())
+            x = tuple(x.ravel().tolist())
             self.objects[obj_id].state = x
 
     def update(self, detection_list: list):
@@ -105,7 +109,7 @@ class KalmanTracker(BaseTracker):
                 obj.absent_count += 1
                 self._apply_kf(obj_id, None, lost=True)
                 self.objects[obj_id].path.append(
-                    (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                    (int(self.objects[obj_id].state[0]), int(self.objects[obj_id].state[2]))
                 )
                 self.objects[obj_id].obj_rects.append(None)
 
@@ -129,7 +133,7 @@ class KalmanTracker(BaseTracker):
         else:
             obj_ids = list(self.objects.keys())
             obj_bottoms = [
-                (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                (int(self.objects[obj_id].state[0]), int(self.objects[obj_id].state[2]))
                 for obj_id in obj_ids
             ]
 
@@ -164,7 +168,7 @@ class KalmanTracker(BaseTracker):
                             self.objects[obj_id].obj_class = detected_classes[col]
 
                     self.objects[obj_id].path.append(
-                        (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                        (int(self.objects[obj_id].state[0]), int(self.objects[obj_id].state[2]))
                     )
                     self.objects[obj_id].obj_rects.append(detected_rects[col])
 
@@ -189,7 +193,7 @@ class KalmanTracker(BaseTracker):
                 self.objects[obj_id].absent_count += 1
                 self._apply_kf(obj_id, None, lost=True)
                 self.objects[obj_id].path.append(
-                    (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                    (int(self.objects[obj_id].state[0]), int(self.objects[obj_id].state[2]))
                 )
                 self.objects[obj_id].obj_rects.append(None)
 
