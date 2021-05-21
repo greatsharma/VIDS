@@ -167,6 +167,6 @@ class BaseDetector(object):
                 }
             )
 
-        detection_list = nonmax_suppression(detection_list, 0.5)
+        detection_list = nonmax_suppression(detection_list, 0.55)
 
         return detection_list, ped_and_cattles
