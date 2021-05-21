@@ -184,30 +184,28 @@ class KalmanTracker(BaseTracker):
 
             to_deregister = []
 
-            if D.shape[0] >= D.shape[1]:
-                for row in unused_rows:
-                    obj_id = obj_ids[row]
-                    self.objects[obj_id].absent_count += 1
-                    self._apply_kf(obj_id, None, lost=True)
-                    self.objects[obj_id].path.append(
-                        (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
-                    )
-                    self.objects[obj_id].obj_rects.append(None)
+            for row in unused_rows:
+                obj_id = obj_ids[row]
+                self.objects[obj_id].absent_count += 1
+                self._apply_kf(obj_id, None, lost=True)
+                self.objects[obj_id].path.append(
+                    (self.objects[obj_id].state[0], self.objects[obj_id].state[2])
+                )
+                self.objects[obj_id].obj_rects.append(None)
 
-                    self._update_eos(obj_id, lost=True)
+                self._update_eos(obj_id, lost=True)
 
-                    if self.objects[obj_id].absent_count > self.max_absent:
-                        to_deregister.append(obj_id)
+                if self.objects[obj_id].absent_count > self.max_absent:
+                    to_deregister.append(obj_id)
 
-                for obj_id in to_deregister:
-                    self._deregister_object(obj_id)
+            for obj_id in to_deregister:
+                self._deregister_object(obj_id)
 
-            else:
-                for col in unused_cols:
-                    self._register_object(detection_list[col])
-                    self._apply_kf(self.next_objid, detected_bottoms[col])
-                    self.objects[self.next_objid].lastdetected_state = self.objects[
-                        self.next_objid
-                    ].state
+            for col in unused_cols:
+                self._register_object(detection_list[col])
+                self._apply_kf(self.next_objid, detected_bottoms[col])
+                self.objects[self.next_objid].lastdetected_state = self.objects[
+                    self.next_objid
+                ].state
 
         return self.objects
