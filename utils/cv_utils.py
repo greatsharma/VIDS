@@ -62,7 +62,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
         obj_bottom = (
             obj.obj_bottom
             if self.tracker_type == "centroid"
-            else (obj.state[0], obj.state[2])
+            else (int(obj.state[0]), int(obj.state[2]))
         )
 
         (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["deregistering_line_rightdirection"]
@@ -88,13 +88,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
             to_deregister.append(obj.objid)
             continue
 
-        if self.mode == "debug":
-            cv2.circle(frame, obj_bottom, radius=2, color=(0, 0, 0), thickness=-1)
-
         base_color = CLASS_COLOR[obj.obj_class[0]]
 
         if obj.absent_count == 0:
-            x, y = obj_centroid[0] - 10, obj_centroid[1]
+            x, y = obj_rect[0] + 5, obj_rect[1] + 15
             if obj.direction != "wrong":
                 cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
             else:
@@ -103,14 +100,20 @@ def draw_tracked_objects(self, frame, tracked_objs):
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
 
-        if obj.speed == 0 and obj.direction == "right" and obj.lane in ["1", "2", "3", "4"]:
-            self.speed_detector(obj)
+        # if (obj.avgspeed is not None and len(obj.avgspeed_metadata) < 2) and obj.direction == "right" and obj.lane not in ["5", "6"]:
+        #     self.avgspeed_detector(obj, self.frame_count)
 
-        if obj.speed:
-            to_write = str(obj.speed) + ", kmph"
-        else:
-            to_write = obj.obj_class[0]
-    
+        # to_write = obj.obj_class[0]
+        # if obj.avgspeed:
+        #     to_write += ", " + str(obj.avgspeed) + " kmph"
+
+        if obj.instspeed_list[-1] is not None and obj.direction == "right" and obj.lane not in ["5", "6"] and obj.absent_count == 0:
+            self.instspeed_detector(obj, self.frame_count)
+
+        to_write = obj.obj_class[0]
+        if obj.instspeed_list[-1] not in [0, None]:
+            to_write += ", " + str(obj.instspeed_list[-1]) + " kmph"
+
         if obj.direction == "parked":
             to_write = "parked"
         elif obj.direction == "wrong":
@@ -120,15 +123,12 @@ def draw_tracked_objects(self, frame, tracked_objs):
         condition = path_length < 20
         
         if not condition:
-            (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"]
+            (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"][0]
             position1 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
             if position1 < 0:
                 condition = True
-            
-        if condition:
-            # if to_write != "parked":
-            #     to_write = str(obj.objid) + ": " + to_write
 
+        if condition:
             draw_text_with_backgroud(
                 frame,
                 to_write,
@@ -149,7 +149,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
         for pt, perc, size in zip(path, np.linspace(0.25, 0.6, path_length), [1]*10 + [2]*15 + [3]*15):
             if not prev_point is None:
                 color = tuple(np.array(base_color)*(1-perc))
-                cv2.line(frame, (prev_point[0], prev_point[1]), (pt[0], pt[1]), color, thickness=size, lineType=8)
+                cv2.line(frame, (int(prev_point[0]), int(prev_point[1])), (int(pt[0]), int(pt[1])), color, thickness=size, lineType=8)
             prev_point = pt
 
         if self.mode == "debug":

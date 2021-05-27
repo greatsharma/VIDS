@@ -34,8 +34,13 @@ class VehicleObject(object):
         self.starttime = None
         self.endtime = None
 
-        self.framecount_speedrefs = []
-        self.speed = 0
+        # following attributes are for avg interval speed
+        self.avgspeed_metadata = {}
+        self.avgspeed = 0
+
+        # following attributes are for instantaneous speed
+        self.instspeed_metadata = {}
+        self.instspeed_list = [0]
 
         self.axles = []  # only for trucks
         self.axle_config = None
@@ -109,9 +114,9 @@ class BaseTracker(object):
         ]
 
         if detection["obj_class"][0] in "hmv":
-            semi_minoraxis = int(semi_majoraxis / 1.5)
+            semi_minoraxis = int(semi_majoraxis / 1.25)
         else:
-            semi_minoraxis = int(semi_majoraxis / 2)
+            semi_minoraxis = int(semi_majoraxis / 1.5)
 
         self.objects[self.next_objid].eos = EllipseofSearch(
             detection["obj_bottom"], semi_majoraxis, semi_minoraxis, angle
@@ -120,7 +125,7 @@ class BaseTracker(object):
     def _update_eos(self, obj_id, lost=False) -> None:
         self.objects[obj_id].eos.centre = self.objects[obj_id].path[-1]
 
-        if len(self.objects[obj_id].path) <= 3:
+        if len(self.objects[obj_id].path) <= 8:
             return
 
         pt1, pt2 = self.objects[obj_id].path[-2], self.objects[obj_id].path[-1]
@@ -145,17 +150,17 @@ class BaseTracker(object):
 
             if self.objects[obj_id].obj_class[0] in "hmv":
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.5 * self.objects[obj_id].eos.last_d), 15
+                    int(3 * self.objects[obj_id].eos.last_d), 18
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 10
+                    int(self.objects[obj_id].eos.semi_majoraxis / 1.75), 12
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
                     int(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2.5), 15
+                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 15
                 )
 
         else:
@@ -220,10 +225,13 @@ class BaseTracker(object):
                 self.objects[obj_id].direction = "wrong"
 
             if self.objects[obj_id].direction == "wrong":
-                upper_coord1 = self.objects[obj_id].path[-1]
-                upper_coord2 = self.objects[obj_id].path[-self.direction_detector_interval]
+                rect_coords1 = self.objects[obj_id].obj_rects[-1]
+                rect_coords2 = self.objects[obj_id].obj_rects[-self.direction_detector_interval]
 
-                if upper_coord1 and upper_coord2:
+                if rect_coords1 and rect_coords2:
+                    upper_coord1 = (rect_coords1[0] + rect_coords1[2]) // 2, rect_coords1[1]
+                    upper_coord2 = (rect_coords2[0] + rect_coords2[2]) // 2, rect_coords2[1]
+
                     dist = self.direction_detector(
                         self.objects[obj_id].lane,
                         upper_coord1,

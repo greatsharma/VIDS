@@ -12,7 +12,7 @@ from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
 from utils import draw_tracked_objects
 from utils import init_lane_detector, init_direction_detector, init_classupdate_line
-from utils import init_position_wrt_midrefs, init_speed_detector
+from utils import init_position_wrt_midrefs, init_avgspeed_detector, init_instspeed_detector
 
 
 class VehicleTracking(object):
@@ -54,7 +54,8 @@ class VehicleTracking(object):
         self.direction_detector_interval = direction_detector_interval
         self.mode = mode
 
-        self.speed_detector = init_speed_detector(self.camera_meta)
+        self.speed_detector = init_avgspeed_detector(self.camera_meta)
+        self.instspeed_detector = init_instspeed_detector(self.camera_meta)
 
         self.vidcap = cv2.VideoCapture(self.input_path)
 
@@ -172,7 +173,7 @@ class VehicleTracking(object):
             self._compress_video(self.video_filename, compressed_filename, True)
 
     def run(self):
-        frame_count = 0
+        self.frame_count = 0
 
         date = datetime.datetime.now()
         date = date.strftime("%d_%m_%Y_%H:%M:%S")
@@ -211,7 +212,7 @@ class VehicleTracking(object):
                 self.vidcap = cv2.VideoCapture(self.input_path)
                 status, frame = self.vidcap.read()
 
-            frame_count += 1
+            self.frame_count += 1
 
             frame = cv2.resize(
                 frame,
@@ -236,19 +237,14 @@ class VehicleTracking(object):
                         radius=3, color=(0, 0, 255), thickness=-1,
                     )
 
-                    pt1, pt2, pt3, pt4 = self.camera_meta[f"lane{l}"]["classupdate_line"]
-                    cv2.line(frame, pt1, pt2, (255, 0, 255), 1)
-                    cv2.line(frame, pt3, pt4, (255, 0, 255), 1)
-
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_rightdirection"]
                     cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
 
                     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
                     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
-                    ref1, ref2 = self.camera_meta[f"lane{l}"]["speed_reflines"]
-                    cv2.line(frame, ref1[0], ref1[1], (0, 0, 255), 1)
-                    cv2.line(frame, ref2[0], ref2[1], (0, 0, 255), 1)
+                    for ref in self.camera_meta[f"lane{l}"]["speed_reflines"]:
+                        cv2.line(frame, ref[0], ref[1], (255, 0, 255), 1)
 
             if self.output:
                 self.videowriter.write(frame)
@@ -263,8 +259,8 @@ class VehicleTracking(object):
 
             tok = time.time()
             curr_fps = round(1.0 / (tok-tik2), 4)
-            avg_fps = round(frame_count / (tok-tik1), 4)
-            print(frame_count, curr_fps,avg_fps)
+            avg_fps = round(self.frame_count / (tok-tik1), 4)
+            print(self.frame_count, curr_fps, avg_fps)
 
         if self.output:
             self._clean_exit()
@@ -372,7 +368,7 @@ if __name__ == "__main__":
         "--direction_detector_interval",
         type=int,
         required=False,
-        default=25,
+        default=16,
         help="interval between two frames for direction detection",
     )
 

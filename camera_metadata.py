@@ -15,17 +15,19 @@ CAMERA_METADATA = {
 
             "mid_ref": [[(200, 241), (420, 259)], [(300, 171), (445, 183)], [(360, 119), (460, 127)]],
 
-            "countinterval": [(86,380), (372,403), (184,289), (404,304)],
-
             "classupdate_line": [(12, 452), (348, 483), (178,297), (401,315)],
 
             "deregistering_line_rightdirection": [(395,93), (471,98)],
     
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
-            "speed_reflines": [[(50,362), (400,362)], [(50,278), (420,278)]],
-
             "angle": 0.86,
+            
+            "speed_reflines": [[(30,421), (380,421)], [(50,362), (400,362)], [(110,335), (400,335)], [(145,297), (410,297)], [(165,278), (420,278)]],
+
+            "speedrefs_length": [6, 3, 6, 3], # in meters
+
+            "speedinterval_length": 15,
 
         },
 
@@ -40,17 +42,19 @@ CAMERA_METADATA = {
 
             "mid_ref": [[(200, 241), (420, 259)], [(300, 171), (445, 183)], [(360, 119), (460, 127)]],
 
-            "countinterval": [(86,380), (372,403), (184,289), (404,304)],
-
             "classupdate_line": [(12, 452), (348, 483), (178,297), (401,315)],
 
             "deregistering_line_rightdirection": [(395,93), (471,98)],
 
             "deregistering_line_wrongdirection": [(6,458), (345,494)],
 
-            "speed_reflines": [[(50,362), (400,362)], [(50,278), (420,278)]],
-
             "angle": 1.102,
+
+            "speed_reflines": [[(30,421), (380,421)], [(50,362), (400,362)], [(110,335), (400,335)], [(145,297), (410,297)], [(165,278), (420,278)]],
+
+            "speedrefs_length": [6, 3, 6, 3], # in meters
+
+            "speedinterval_length": 15,
 
         },
 
@@ -65,17 +69,19 @@ CAMERA_METADATA = {
 
             "mid_ref": [[(535, 131), (662, 135)], [(550, 187), (733, 190)], [(575, 267), (825, 270)]],
 
-            "countinterval": [(577,267), (788,265), (608,366), (887,359)],
-
             "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
 
             "deregistering_line_rightdirection": [(644, 488), (844, 484)],
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
-            "speed_reflines": [[(550,266), (850,266)], [(600,364), (950,364)]],
-
             "angle": -1.107,
+
+            "speed_reflines": [[(570,266), (850,266)], [(570,298), (870,298)], [(570,319), (900,319)], [(600,364), (950,364)], [(600,398), (950,398)]],
+
+            "speedrefs_length": [6, 3, 6, 3], # in meters
+
+            "speedinterval_length": 15,
 
         },
 
@@ -90,17 +96,19 @@ CAMERA_METADATA = {
 
             "mid_ref": [[(535, 131), (662, 135)], [(550, 187), (733, 190)], [(575, 267), (825, 270)]],
 
-            "countinterval": [(577,267), (788,265), (608,366), (887,359)],
-
             "classupdate_line": [(571, 241), (764, 242), (604, 354), (874, 345)],
 
             "deregistering_line_rightdirection": [(810,436), (957,424)],
 
             "deregistering_line_wrongdirection": [(529, 100), (613, 100)],
 
-            "speed_reflines": [[(550,266), (850,266)], [(600,364), (950,364)]],
-
             "angle": -0.852,
+
+            "speed_reflines": [[(570,266), (850,266)], [(570,298), (870,298)], [(570,319), (900,319)], [(600,364), (950,364)], [(600,398), (950,398)]],
+
+            "speedrefs_length": [6, 3, 6, 3], # in meters
+
+            "speedinterval_length": 15,
 
         },
 
@@ -147,10 +155,12 @@ CAMERA_METADATA = {
         },
 
         "initial_maxdistances": {
-            "hmv": [35, 25, 18, 15],
-            "lmv,auto,tw": [40, 30, 20, 15],
-            "pedestrian,cattles": [18, 12, 10, 8],
+            "hmv": [35, 25, 18, 10],
+            "lmv,auto,tw": [40, 30, 20, 10],
+            "pedestrian,cattles": [18, 12, 10, 6],
         },
+
+        "intesection_point_of_all_lanes": (503, -8),
     },
 }
 
