@@ -147,7 +147,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
         for pt, perc, size in zip(path, np.linspace(0.25, 0.6, path_length), [1]*10 + [2]*15 + [3]*15):
             if not prev_point is None:
                 color = tuple(np.array(base_color)*(1-perc))
-                cv2.line(frame, (int(prev_point[0]), int(prev_point[1])), (int(pt[0]), int(pt[1])), color, thickness=size, lineType=8)
+                cv2.line(frame, prev_point, pt, color, thickness=size, lineType=8)
             prev_point = pt
 
         if self.mode == "debug":
