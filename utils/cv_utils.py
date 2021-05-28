@@ -62,7 +62,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
         obj_bottom = (
             obj.obj_bottom
             if self.tracker_type == "centroid"
-            else (int(obj.state[0]), int(obj.state[2]))
+            else (round(obj.state[0]), round(obj.state[2]))
         )
 
         (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["deregistering_line_rightdirection"]
