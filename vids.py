@@ -112,6 +112,8 @@ class VehicleTracking(object):
             "6": self.camera_meta["lane6"]["angle"],
         }
 
+        intesection_point_of_lanes = self.camera_meta["intesection_point_of_all_lanes"]
+
         if self.tracker_type == "centroid":
             self.tracker = CentroidTracker(
                 lane_detector,
@@ -121,6 +123,7 @@ class VehicleTracking(object):
                 classupdate_line,
                 pos_wrt_midrefs__detector,
                 lane_angles,
+                intesection_point_of_lanes,
                 self.max_absent,
             )
         else:
@@ -132,6 +135,7 @@ class VehicleTracking(object):
                 classupdate_line,
                 pos_wrt_midrefs__detector,
                 lane_angles,
+                intesection_point_of_lanes,
                 self.max_absent,
             )
 
@@ -248,7 +252,7 @@ class VehicleTracking(object):
             if self.output:
                 self.videowriter.write(frame)
 
-            cv2.imshow(f"VIDS", frame)
+            cv2.imshow("VIDS", frame)
             key = cv2.waitKey(1)
             
             if key == ord("p"):

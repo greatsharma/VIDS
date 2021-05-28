@@ -209,9 +209,51 @@ while vidcap.isOpened():
     # cv2.line(frame, (550,266), (850,266), (255, 0, 0), 1)
     # cv2.line(frame, (600,364), (950,364), (255, 0, 0), 1)
 
+    # pt1 = [319.6, 251.3] # bottom
+    # pt2 = [350.4, 224.8] # tip
+
+    # pt1 = [375.274, 243.91] # bottom
+    # pt2 = [400.636, 216.507] # tip
+
+    pt1 = [758.94, 364.423] # bottom
+    pt2 = [800.45, 398.181] # tip
+
+    pt1_copy = pt1.copy()
+    pt2_copy = pt2.copy()
+
+    cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), (255, 0, 0), 2, tipLength=0.25)
+
+    pt1[1] = -pt1[1]
+    pt2[1] = -pt2[1]
+    angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
+    print(angle)
+
+    lane_angle = math.atan2(-8 - pt1[1], 503 - pt1[0]) - 3.1416
+    print(lane_angle)
+
+    angle = -lane_angle - angle
+    print(angle)
+
+    c = math.cos(angle)
+    s = math.sin(angle)
+    pt2[0] -= pt1[0]
+    pt2[1] -= pt1[1]
+
+    x = [0, 0]
+    x[0] = pt1[0] + c * pt2[0] - s * pt2[1]
+    x[1] = -pt1[1] + s * pt2[0] + c * pt2[1]
+    print(x)
+
+    cv2.arrowedLine(frame, tuple(round(p) for p in pt1_copy), tuple(round(p) for p in x), (0, 255, 0), 2)
+
     plt.imshow(frame)
     plt.show()
     break
+
+    # cv2.imshow("", frame)
+    # key = cv2.waitKey(-1)
+    # if key == ord("q"):
+    #     break
 
 vidcap.release()
 cv2.destroyAllWindows()

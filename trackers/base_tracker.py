@@ -67,6 +67,7 @@ class BaseTracker(object):
         classupdate_line: Callable,
         pos_wrt_midrefs__detector: Callable,
         lane_angles: dict,
+        intesection_point_of_lanes: tuple,
         max_absent: int,
     ) -> None:
 
@@ -77,6 +78,7 @@ class BaseTracker(object):
         self.classupdate_line = classupdate_line
         self.pos_wrt_midrefs__detector = pos_wrt_midrefs__detector
         self.lane_angles = lane_angles
+        self.intesection_point_of_lanes = intesection_point_of_lanes
         self.max_absent = max_absent
 
         self.next_objid = 0

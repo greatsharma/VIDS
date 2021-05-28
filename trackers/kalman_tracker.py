@@ -56,14 +56,17 @@ class KalmanTracker(BaseTracker):
                 pt1 = [
                     self.objects[obj_id].lastdetected_state[0],
                     -self.objects[obj_id].lastdetected_state[2],
-                ]
-                pt2 = [x[0], -x[2]]
+                ] # bottom
+                pt2 = [x[0], -x[2]] # tip
+
                 angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
 
-                if objlane in ["1", "2", "5"]:
-                    angle = self.lane_angles[objlane] - angle
-                else:
-                    angle = -self.lane_angles[objlane] - angle
+                lane_angle = math.atan2(self.intesection_point_of_lanes[1] - pt1[1], self.intesection_point_of_lanes[0] - pt1[0])
+
+                if objlane in ["3", "4", "6"]:
+                    lane_angle = lane_angle - 3.1416
+
+                angle = -lane_angle - angle
 
                 c = math.cos(angle)
                 s = math.sin(angle)
