@@ -12,7 +12,7 @@ from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
 from utils import draw_tracked_objects
 from utils import init_lane_detector, init_direction_detector, init_classupdate_line
-from utils import init_position_wrt_midrefs, init_avgspeed_detector, init_instspeed_detector
+from utils import init_position_wrt_midrefs, init_speed_detector
 
 
 class VehicleTracking(object):
@@ -54,8 +54,7 @@ class VehicleTracking(object):
         self.direction_detector_interval = direction_detector_interval
         self.mode = mode
 
-        self.avgspeed_detector = init_avgspeed_detector(self.camera_meta)
-        self.instspeed_detector = init_instspeed_detector(self.camera_meta)
+        self.speed_detector = init_speed_detector(self.camera_meta)
 
         self.vidcap = cv2.VideoCapture(self.input_path)
 

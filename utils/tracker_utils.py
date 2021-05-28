@@ -180,71 +180,7 @@ def _project_point_on_line(lane, point_to_project, line_coords, point_along_whic
     return _line_intersect(pt1, pt3, line_coords[0], line_coords[1])
 
 
-def init_avgspeed_detector(camera_meta: dict) -> Callable:
-    lane_refs = {f"{l}": {r: camera_meta[f"lane{l}"]["speed_reflines"][r-1] for r in [1,2,3,4,5]} for l in [1,2,3,4]}
-
-    intesection_point_of_all_lanes = camera_meta["intesection_point_of_all_lanes"]
-
-    speedinterval_length = {f"{l}": camera_meta[f"lane{l}"]["speedinterval_length"] for l in [1,2,3,4]}
-
-    speedrefs_length = {
-        f"{l}": {i: camera_meta[f"lane{l}"]["speedrefs_length"][i-1] for i in [1,2,3,4]} for l in [1,2,3,4]
-    }
-
-    def avgspeed_detector(obj, frame_count):        
-        l = len(obj.avgspeed_metadata)
-        Px,Py = (obj.state[0], obj.state[2])
-        interval = _interval_wrt_speedrefs(Px, Py, obj.lane, lane_refs)
-
-        if l == 0:
-            if interval in [4, 5]:
-                obj.avgspeed = None
-            elif interval in [1, 2, 3]:
-                projected_pt1 = _project_point_on_line(obj.lane, (Px,Py), lane_refs[obj.lane][interval], intesection_point_of_all_lanes, direction_of_projection="lower")
-                projected_pt2 = _project_point_on_line(obj.lane, (Px,Py), lane_refs[obj.lane][interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
-
-                pixle_distance1 = distance.euclidean((Px,Py), projected_pt1)
-                pixle_distance2 = distance.euclidean((Px,Py), projected_pt2)
-                pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][interval]
-                distance_covered_in_metres = - pixle_distance1 / pixles_per_meter
-                
-                if interval > 1:
-                    distance_covered_in_metres -=  speedrefs_length[obj.lane][1]
-
-                if interval > 2:
-                    distance_covered_in_metres -=  speedrefs_length[obj.lane][2]
-
-                obj.avgspeed_metadata[frame_count] = distance_covered_in_metres
-
-            return
-
-        if interval == 5:
-            obj.avgspeed = None
-
-        if interval == 4:
-            projected_pt1 = _project_point_on_line(obj.lane, (Px,Py), lane_refs[obj.lane][4], intesection_point_of_all_lanes, direction_of_projection="lower")
-            projected_pt2 = _project_point_on_line(obj.lane, (Px,Py), lane_refs[obj.lane][5], intesection_point_of_all_lanes, direction_of_projection="upper")
-
-            pixle_distance1 = distance.euclidean((Px,Py), projected_pt1)
-            pixle_distance2 = distance.euclidean((Px,Py), projected_pt2)
-            pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][4]
-            distance_covered_in_metres = pixle_distance1 / pixles_per_meter
-
-            obj.avgspeed_metadata[frame_count] = distance_covered_in_metres
-
-            distance_covered_in_metres = speedinterval_length[obj.lane] + sum(obj.avgspeed_metadata.values())
-            frame_counts = list(obj.avgspeed_metadata.keys())
-            frame_diff = frame_counts[1] - frame_counts[0]
-
-            speed = distance_covered_in_metres / frame_diff # speed in meter/frame
-            speed /= (0.0625) # speed in meter/seconds, 1/16 = 0.0625, 16 is input-fps
-            speed *= 3.6 # speed in kmph
-            obj.avgspeed = round(speed, 1)
-
-    return avgspeed_detector
-
-
-def init_instspeed_detector(camera_meta: dict) -> Callable:
+def init_speed_detector(camera_meta: dict) -> Callable:
     lane_refs = {f"{l}": {r: camera_meta[f"lane{l}"]["speed_reflines"][r-1] for r in [1,2,3,4,5]} for l in [1,2,3,4]}
 
     intesection_point_of_all_lanes = camera_meta["intesection_point_of_all_lanes"]
@@ -253,7 +189,7 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
         f"{l}": {i: camera_meta[f"lane{l}"]["speedrefs_length"][i-1] for i in [1,2,3,4]} for l in [1,2,3,4]
     }
 
-    def instspeed_detector(obj, curr_framecount):
+    def speed_detector(obj, curr_framecount):
         Px,Py = (obj.state[0], obj.state[2])
         interval = _interval_wrt_speedrefs(Px, Py, obj.lane, lane_refs)
 
@@ -265,24 +201,24 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
             obj.avgspeed = None
             return
 
-        if not len(obj.instspeed_metadata):
+        if not len(obj.speed_metadata):
             if interval == 4:
                 obj.instspeed_list.append(None)
                 obj.avgspeed = None
                 return
 
-        obj.instspeed_metadata[curr_framecount] = (interval, (Px,Py))
+        obj.speed_metadata[curr_framecount] = (interval, (Px,Py))
 
-        first_framecount = next(iter(obj.instspeed_metadata))
+        first_framecount = next(iter(obj.speed_metadata))
 
         if curr_framecount >= first_framecount + 5:
 
-            if obj.instspeed_metadata[curr_framecount-1][0] == 4:
+            if obj.speed_metadata[curr_framecount-1][0] == 4:
                 obj.instspeed_list.append(obj.instspeed_list[-1])
             else:
                 distance_covered_in_metres = 0
-                prev_interval, prev_position =  obj.instspeed_metadata[first_framecount]
-                curr_interval, curr_position =  obj.instspeed_metadata[curr_framecount]
+                prev_interval, prev_position =  obj.speed_metadata[first_framecount]
+                curr_interval, curr_position =  obj.speed_metadata[curr_framecount]
 
                 if prev_interval == curr_interval:
 
@@ -334,4 +270,4 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
                 if curr_interval == 4:
                     obj.avgspeed = speed
 
-    return instspeed_detector
+    return speed_detector

@@ -34,13 +34,10 @@ class VehicleObject(object):
         self.starttime = None
         self.endtime = None
 
-        # following attributes are for avg interval speed
-        self.avgspeed_metadata = {}
-        self.avgspeed = 0
-
         # following attributes are for instantaneous speed
-        self.instspeed_metadata = {}
+        self.speed_metadata = {}
         self.instspeed_list = [0]
+        self.avgspeed = 0
 
         self.axles = []  # only for trucks
         self.axle_config = None
