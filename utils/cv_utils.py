@@ -103,16 +103,16 @@ def draw_tracked_objects(self, frame, tracked_objs):
         # if (obj.avgspeed is not None and len(obj.avgspeed_metadata) < 2) and obj.direction == "right" and obj.lane not in ["5", "6"]:
         #     self.avgspeed_detector(obj, self.frame_count)
 
-        # to_write = obj.obj_class[0]
-        # if obj.avgspeed:
-        #     to_write += ", " + str(obj.avgspeed) + " kmph"
-
         if obj.instspeed_list[-1] is not None and obj.direction == "right" and obj.lane not in ["5", "6"] and obj.absent_count == 0:
             self.instspeed_detector(obj, self.frame_count)
 
         to_write = obj.obj_class[0]
-        if obj.instspeed_list[-1] not in [0, None]:
-            to_write += ", " + str(obj.instspeed_list[-1]) + " kmph"
+
+        # if obj.instspeed_list[-1] not in [0, None]:
+        #     to_write += ", " + str(obj.instspeed_list[-1]) + " kmph"
+
+        if obj.avgspeed:
+            to_write += ", " + str(obj.avgspeed) + " kmph"
 
         if obj.direction == "parked":
             to_write = "parked"

@@ -254,8 +254,6 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
     }
 
     def instspeed_detector(obj, curr_framecount):
-        from pprint import pprint
-
         Px,Py = (obj.state[0], obj.state[2])
         interval = _interval_wrt_speedrefs(Px, Py, obj.lane, lane_refs)
 
@@ -264,11 +262,13 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
 
         if interval == 5:
             obj.instspeed_list.append(None)
+            obj.avgspeed = None
             return
 
         if not len(obj.instspeed_metadata):
             if interval == 4:
                 obj.instspeed_list.append(None)
+                obj.avgspeed = None
                 return
 
         obj.instspeed_metadata[curr_framecount] = (interval, (Px,Py))
@@ -328,7 +328,10 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
 
                 speed = distance_covered_in_metres / (curr_framecount - first_framecount) # speed in meter/frame
                 speed /= (0.0625) # speed in meter/seconds, 1/16 = 0.0625, 16 is input-fps
-                speed *= 3.6 # speed in kmph
-                obj.instspeed_list.append(round(speed, 1))
+                speed = round(speed * 3.6, 1) # speed in kmph
+                obj.instspeed_list.append(speed)
+
+                if curr_interval == 4:
+                    obj.avgspeed = speed
 
     return instspeed_detector
