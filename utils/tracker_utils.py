@@ -213,7 +213,7 @@ def init_speed_detector(camera_meta: dict) -> Callable:
 
         if curr_framecount >= first_framecount + 5:
 
-            if obj.speed_metadata[curr_framecount-1][0] == 4:
+            if (curr_framecount-1) in obj.speed_metadata.keys() and obj.speed_metadata[curr_framecount-1][0] == 4:
                 obj.instspeed_list.append(obj.instspeed_list[-1])
             else:
                 distance_covered_in_metres = 0
