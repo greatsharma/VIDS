@@ -129,6 +129,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 condition = True
 
         if condition:
+            # to_write = str(obj.objid) + ", " + to_write
             draw_text_with_backgroud(
                 frame,
                 to_write,

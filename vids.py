@@ -54,7 +54,7 @@ class VehicleTracking(object):
         self.direction_detector_interval = direction_detector_interval
         self.mode = mode
 
-        self.speed_detector = init_avgspeed_detector(self.camera_meta)
+        self.avgspeed_detector = init_avgspeed_detector(self.camera_meta)
         self.instspeed_detector = init_instspeed_detector(self.camera_meta)
 
         self.vidcap = cv2.VideoCapture(self.input_path)

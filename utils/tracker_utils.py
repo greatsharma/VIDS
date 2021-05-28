@@ -259,8 +259,6 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
         Px,Py = (obj.state[0], obj.state[2])
         interval = _interval_wrt_speedrefs(Px, Py, obj.lane, lane_refs)
 
-        to_log = 3
-
         if interval == 0:
             return
 
@@ -274,78 +272,63 @@ def init_instspeed_detector(camera_meta: dict) -> Callable:
                 return
 
         obj.instspeed_metadata[curr_framecount] = (interval, (Px,Py))
-        if obj.objid == to_log:
-            print(f"\n\n")
-            pprint(obj.instspeed_metadata)
 
         first_framecount = next(iter(obj.instspeed_metadata))
 
         if curr_framecount >= first_framecount + 5:
 
-            distance_covered_in_metres = 0
-            prev_interval, prev_position =  obj.instspeed_metadata[first_framecount]
-            curr_interval, curr_position =  obj.instspeed_metadata[curr_framecount]
-
-            if prev_interval == curr_interval:
-
-                projected_pt1 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
-                projected_pt2 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
-
-                pixle_distance1 = distance.euclidean(prev_position, projected_pt1)
-                pixle_distance2 = distance.euclidean(prev_position, projected_pt2)
-                pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][prev_interval]
-                distance_covered_in_metres -= pixle_distance1 / pixles_per_meter
-
-                if obj.objid == to_log:
-                    print(pixle_distance1 / pixles_per_meter, end=", ")
-
-                projected_pt1 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
-                projected_pt2 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
-
-                pixle_distance1 = distance.euclidean(curr_position, projected_pt1)
-                pixle_distance2 = distance.euclidean(curr_position, projected_pt2)
-                pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][curr_interval]
-                distance_covered_in_metres += pixle_distance1 / pixles_per_meter
-
-                if obj.objid == to_log:
-                    print(pixle_distance1 / pixles_per_meter, end=", ")
-
+            if obj.instspeed_metadata[curr_framecount-1][0] == 4:
+                obj.instspeed_list.append(obj.instspeed_list[-1])
             else:
+                distance_covered_in_metres = 0
+                prev_interval, prev_position =  obj.instspeed_metadata[first_framecount]
+                curr_interval, curr_position =  obj.instspeed_metadata[curr_framecount]
 
-                projected_pt1 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
-                projected_pt2 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
+                if prev_interval == curr_interval:
 
-                pixle_distance1 = distance.euclidean(prev_position, projected_pt1)
-                pixle_distance2 = distance.euclidean(prev_position, projected_pt2)
-                pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][prev_interval]
-                distance_covered_in_metres += pixle_distance2 / pixles_per_meter
+                    projected_pt1 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
+                    projected_pt2 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
 
-                if obj.objid == to_log:
-                    print(pixle_distance2 / pixles_per_meter, end=", ")
+                    pixle_distance1 = distance.euclidean(prev_position, projected_pt1)
+                    pixle_distance2 = distance.euclidean(prev_position, projected_pt2)
+                    pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][prev_interval]
+                    distance_covered_in_metres -= pixle_distance1 / pixles_per_meter
 
-                projected_pt1 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
-                projected_pt2 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
+                    projected_pt1 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
+                    projected_pt2 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
 
-                pixle_distance1 = distance.euclidean(curr_position, projected_pt1)
-                pixle_distance2 = distance.euclidean(curr_position, projected_pt2)
-                pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][curr_interval]
-                distance_covered_in_metres += pixle_distance1 / pixles_per_meter
+                    pixle_distance1 = distance.euclidean(curr_position, projected_pt1)
+                    pixle_distance2 = distance.euclidean(curr_position, projected_pt2)
+                    pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][curr_interval]
+                    distance_covered_in_metres += pixle_distance1 / pixles_per_meter
 
-                if obj.objid == to_log:
-                    print(pixle_distance1 / pixles_per_meter, end=", ")
+                else:
 
-                if curr_interval - prev_interval >= 2:
-                    distance_covered_in_metres +=  speedrefs_length[obj.lane][curr_interval-1]
+                    projected_pt1 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
+                    projected_pt2 = _project_point_on_line(obj.lane, prev_position, lane_refs[obj.lane][prev_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
 
-                if curr_interval - prev_interval >= 3:
-                    distance_covered_in_metres +=  speedrefs_length[obj.lane][curr_interval-2]
+                    pixle_distance1 = distance.euclidean(prev_position, projected_pt1)
+                    pixle_distance2 = distance.euclidean(prev_position, projected_pt2)
+                    pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][prev_interval]
+                    distance_covered_in_metres += pixle_distance2 / pixles_per_meter
 
-            speed = distance_covered_in_metres / (curr_framecount - first_framecount) # speed in meter/frame
-            speed /= (0.0625) # speed in meter/seconds, 1/16 = 0.0625, 16 is input-fps
-            speed *= 3.6 # speed in kmph
-            obj.instspeed_list.append(round(speed, 1))
+                    projected_pt1 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval], intesection_point_of_all_lanes, direction_of_projection="lower")
+                    projected_pt2 = _project_point_on_line(obj.lane, curr_position, lane_refs[obj.lane][curr_interval+1], intesection_point_of_all_lanes, direction_of_projection="upper")
 
-            if obj.objid == to_log:
-                print(distance_covered_in_metres, (curr_framecount - first_framecount), obj.instspeed_list)
+                    pixle_distance1 = distance.euclidean(curr_position, projected_pt1)
+                    pixle_distance2 = distance.euclidean(curr_position, projected_pt2)
+                    pixles_per_meter = (pixle_distance1 + pixle_distance2) / speedrefs_length[obj.lane][curr_interval]
+                    distance_covered_in_metres += pixle_distance1 / pixles_per_meter
+
+                    if curr_interval - prev_interval >= 2:
+                        distance_covered_in_metres +=  speedrefs_length[obj.lane][curr_interval-1]
+
+                    if curr_interval - prev_interval >= 3:
+                        distance_covered_in_metres +=  speedrefs_length[obj.lane][curr_interval-2]
+
+                speed = distance_covered_in_metres / (curr_framecount - first_framecount) # speed in meter/frame
+                speed /= (0.0625) # speed in meter/seconds, 1/16 = 0.0625, 16 is input-fps
+                speed *= 3.6 # speed in kmph
+                obj.instspeed_list.append(round(speed, 1))
 
     return instspeed_detector
