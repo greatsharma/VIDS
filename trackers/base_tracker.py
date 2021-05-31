@@ -2,7 +2,7 @@ import math
 import numpy as np
 from typing import Callable
 from scipy.spatial import distance
-from collections import deque, OrderedDict
+from collections import OrderedDict
 
 
 class EllipseofSearch(object):
@@ -113,9 +113,9 @@ class BaseTracker(object):
         ]
 
         if detection["obj_class"][0] in "hmv":
-            semi_minoraxis = int(semi_majoraxis / 1.25)
+            semi_minoraxis = round(semi_majoraxis / 1.25)
         else:
-            semi_minoraxis = int(semi_majoraxis / 1.5)
+            semi_minoraxis = round(semi_majoraxis / 1.5)
 
         self.objects[self.next_objid].eos = EllipseofSearch(
             detection["obj_bottom"], semi_majoraxis, semi_minoraxis, angle
@@ -149,34 +149,34 @@ class BaseTracker(object):
 
             if self.objects[obj_id].obj_class[0] in "hmv":
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(3 * self.objects[obj_id].eos.last_d), 18
+                    round(3 * self.objects[obj_id].eos.last_d), 18
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 1.75), 12
+                    round(self.objects[obj_id].eos.semi_majoraxis / 1.75), 12
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 20
+                    round(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 15
+                    round(self.objects[obj_id].eos.semi_majoraxis / 2), 15
                 )
 
         else:
 
             if self.objects[obj_id].obj_class[0] in "hmv":
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 20
+                    round(2.25 * self.objects[obj_id].eos.last_d), 20
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 1.75), 15
+                    round(self.objects[obj_id].eos.semi_majoraxis / 1.75), 15
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    int(2.25 * self.objects[obj_id].eos.last_d), 25
+                    round(2.25 * self.objects[obj_id].eos.last_d), 25
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
-                    int(self.objects[obj_id].eos.semi_majoraxis / 2), 20
+                    round(self.objects[obj_id].eos.semi_majoraxis / 2), 20
                 )
 
         if self.objects[obj_id].direction == "right":
@@ -188,8 +188,8 @@ class BaseTracker(object):
 
         if self.objects[obj_id].eos.last_d != 0 and not lost:
             self.objects[obj_id].eos.centre = (
-                int((m * pt1[0] + n * pt2[0]) / (m + n + 1e-6)),
-                int((m * pt1[1] + n * pt2[1]) / (m + n + 1e-6)),
+                round((m * pt1[0] + n * pt2[0]) / (m + n + 1e-6)),
+                round((m * pt1[1] + n * pt2[1]) / (m + n + 1e-6)),
             )
 
     def _within_eos(self, obj_id, pt):

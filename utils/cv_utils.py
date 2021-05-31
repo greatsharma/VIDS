@@ -146,13 +146,14 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         prev_point = None
         for pt, perc, size in zip(path, np.linspace(0.25, 0.6, path_length), [1]*10 + [2]*15 + [3]*15):
+            pt = tuple(round(p) for p in pt)
             if not prev_point is None:
                 color = tuple(np.array(base_color)*(1-perc))
                 cv2.line(frame, prev_point, pt, color, thickness=size, lineType=8)
             prev_point = pt
 
         if self.mode == "debug":
-            centre = obj.eos.centre
+            centre = tuple(round(c) for c in obj.eos.centre)
             semi_majoraxis = obj.eos.semi_majoraxis
             semi_minoraxis = obj.eos.semi_minoraxis
             angle = obj.eos.angle
