@@ -128,10 +128,10 @@ class BaseDetector(object):
 
             if self.__class__.__name__ == "TrtYoloDetector":
 
-                x1 = int(obj_bbox[0] * self.frame_w)
-                y1 = int(obj_bbox[1] * self.frame_h)
-                x2 = int(obj_bbox[2] * self.frame_w)
-                y2 = int(obj_bbox[3] * self.frame_h)
+                x1 = obj_bbox[0] * self.frame_w
+                y1 = obj_bbox[1] * self.frame_h
+                x2 = obj_bbox[2] * self.frame_w
+                y2 = obj_bbox[3] * self.frame_h
 
             else:
                 obj_class = str(obj_class.decode())
@@ -141,10 +141,10 @@ class BaseDetector(object):
                 w = obj_bbox[2] * self.frame_w / self.yolo_width
                 h = obj_bbox[3] * self.frame_h / self.yolo_height
 
-                x1 = int(round(x - (w / 2)))
-                x2 = int(round(x + (w / 2)))
-                y1 = int(round(y - (h / 2)))
-                y2 = int(round(y + (h / 2)))
+                x1 = x - (w / 2)
+                x2 = x + (w / 2)
+                y1 = y - (h / 2)
+                y2 = y + (h / 2)
 
             obj_rect = (x1, y1, x2, y2)
 
@@ -152,7 +152,7 @@ class BaseDetector(object):
                 ped_and_cattles.append(obj_rect)
                 continue
 
-            obj_bottom = (obj_rect[0] + obj_rect[2])//2, (obj_rect[3])
+            obj_bottom = (obj_rect[0] + obj_rect[2])/2, (obj_rect[3])
             lane = self.lane_detector(obj_bottom)
 
             if lane is None:

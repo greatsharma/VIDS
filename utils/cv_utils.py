@@ -55,9 +55,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
     to_deregister = []
 
     for obj in tracked_objs.values():
-        obj_rect = obj.rect
-
-        obj_centroid = (obj_rect[0] + obj_rect[2]) // 2, (obj_rect[1] + obj_rect[3]) // 2
+        obj_rect = tuple(round(v) for v in obj.rect)
 
         obj_bottom = (
             obj.obj_bottom
