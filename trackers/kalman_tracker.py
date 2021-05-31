@@ -48,10 +48,11 @@ class KalmanTracker(BaseTracker):
             x = F * x  # + u
             x = tuple(x.ravel().tolist()[0])
 
-            if lost and self.objects[obj_id].direction in ["right", "parked"]:
+            if lost:
                 x = list(x)
 
                 objlane = self.objects[obj_id].lane
+                objdirection =self.objects[obj_id].direction
 
                 pt1 = [
                     self.objects[obj_id].lastdetected_state[0],
@@ -63,7 +64,7 @@ class KalmanTracker(BaseTracker):
 
                 lane_angle = math.atan2(self.intesection_point_of_lanes[1] - pt1[1], self.intesection_point_of_lanes[0] - pt1[0])
 
-                if objlane in ["3", "4", "6"]:
+                if (objlane in ["1", "2", "5"] and objdirection == "wrong") or (objlane in ["3", "4", "6"] and objdirection in ["right", "parked"]):
                     lane_angle = lane_angle - 3.1416
 
                 angle = -lane_angle - angle
