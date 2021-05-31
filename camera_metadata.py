@@ -160,7 +160,7 @@ CAMERA_METADATA = {
             "pedestrian,cattles": [18, 12, 10, 6],
         },
 
-        "intesection_point_of_all_lanes": (503, -8),
+        "intesection_point_of_all_lanes": (501, -2),
     },
 }
 

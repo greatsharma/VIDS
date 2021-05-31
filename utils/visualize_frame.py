@@ -26,7 +26,7 @@ def line_intersect(A1, A2, B1, B2):
     x = Ax1 + uA * (Ax2 - Ax1)
     y = Ay1 + uA * (Ay2 - Ay1)
  
-    return int(x), int(y)
+    return round(x), round(y)
 
 
 def get_point(pt1, ref_number, direction):
@@ -37,8 +37,8 @@ def get_point(pt1, ref_number, direction):
     elif direction == "upper":
         ratio = -3.8
 
-    cx = int(c2[0] + (c1[0]-c2[0]) * ratio)
-    cy = int(c2[1] + (c1[1]-c2[1]) * ratio)
+    cx = round(c2[0] + (c1[0]-c2[0]) * ratio)
+    cy = round(c2[1] + (c1[1]-c2[1]) * ratio)
     pt2 = (cx, cy)
 
     if ref_number == 1:
@@ -140,10 +140,19 @@ while vidcap.isOpened():
     cv2.line(frame, (644, 488), (844, 484), (0,0,255), 1)
     cv2.line(frame, (810,436), (957,424), (0,0,255), 1)
 
-    for pt1, pt2 in [[(93, 468), (359, 159)], [(254, 484), (420, 156)], [(555, 110), (728, 456)], [(597, 111), (910, 469)]]:
+    coords = [
+        [(93, 468), (359, 159)],
+        [(254, 484), (420, 156)],
+        [(555, 110), (728, 456)],
+        [(597, 111), (910, 469)],
+        [(22.4, 444.9), (378.3, 112.9)],
+        [(339.61, 495.84), (467.45, 102.44)],
+    ]
+
+    for pt1, pt2 in coords:
         angle = math.atan2((pt2[1] - pt1[1]), (pt2[0] - pt1[0]))
-        print(angle)
-        cv2.arrowedLine(frame, pt1, pt2, color=(0,0,255), thickness=2, tipLength=0.03)
+        # print(angle)
+        cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), color=(0,0,255), thickness=2, tipLength=0.02)
 
     cv2.line(frame, (30,421), (380,421), (255, 0, 0), 1)
     cv2.line(frame, (50,362), (400,362), (255, 0, 0), 1)
@@ -160,25 +169,24 @@ while vidcap.isOpened():
     # pt5 = (259, 335)
     # cv2.circle(frame,pt5,radius=1,color=(0,255,0),thickness=-1)
 
-    # pt1 = (93, 468)
-    # c1, c2 = (93, 468), (359, 159)
-    # cx = int(c2[0] + (c1[0]-c2[0]) * -3.8)
-    # cy = int(c2[1] + (c1[1]-c2[1]) * -3.8)
+    # pt1 = coords[4][0]
+    # c1, c2 = coords[4]
+    # cx = round(c2[0] + (c1[0]-c2[0]) * -3.8)
+    # cy = round(c2[1] + (c1[1]-c2[1]) * -3.8)
     # pt2 = (cx, cy)
-    # cv2.line(frame, pt1, pt2, (0, 0, 255), 1)
+    # cv2.line(frame, tuple(round(p) for p in pt1), pt2, (0, 0, 255), 1)
 
-    # pt3 = (254, 484)
-    # c1, c2 = (254, 484), (420, 156)
-    # cx = int(c2[0] + (c1[0]-c2[0]) * -3.8)
-    # cy = int(c2[1] + (c1[1]-c2[1]) * -3.8)
+    # pt3 = coords[5][0]
+    # c1, c2 = coords[5]
+    # cx = round(c2[0] + (c1[0]-c2[0]) * -3.8)
+    # cy = round(c2[1] + (c1[1]-c2[1]) * -3.8)
     # pt4 = (cx, cy)
-    # cv2.line(frame, pt3, pt4, (0, 0, 255), 1)
+    # cv2.line(frame, tuple(round(p) for p in pt3), pt4, (0, 0, 255), 1)
 
-    # pt6 = line_intersect(pt1,pt2,pt3,pt4)
-    # print(pt6)
+    # pt6 = line_intersect(pt1,pt2,pt3,pt4)# (501, -2)
     # c1, c2 = pt5, pt6
-    # cx = int(c2[0] + (c1[0]-c2[0]) * 3.8)
-    # cy = int(c2[1] + (c1[1]-c2[1]) * 3.8)
+    # cx = round(c2[0] + (c1[0]-c2[0]) * 3.8)
+    # cy = round(c2[1] + (c1[1]-c2[1]) * 3.8)
     # pt7 = (cx, cy)
     # pt8 = line_intersect(pt5,pt7,(50,362),(400,362))
     # cv2.line(frame, pt5, pt8, (0,255, 0), 2)
@@ -215,36 +223,36 @@ while vidcap.isOpened():
     # pt1 = [375.274, 243.91] # bottom
     # pt2 = [400.636, 216.507] # tip
 
-    pt1 = [758.94, 364.423] # bottom
-    pt2 = [800.45, 398.181] # tip
+    # pt1 = [758.94, 364.423] # bottom
+    # pt2 = [800.45, 398.181] # tip
 
-    pt1_copy = pt1.copy()
-    pt2_copy = pt2.copy()
+    # pt1_copy = pt1.copy()
+    # pt2_copy = pt2.copy()
 
-    cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), (255, 0, 0), 2, tipLength=0.25)
+    # cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), (255, 0, 0), 2, tipLength=0.25)
 
-    pt1[1] = -pt1[1]
-    pt2[1] = -pt2[1]
-    angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
-    print(angle)
+    # pt1[1] = -pt1[1]
+    # pt2[1] = -pt2[1]
+    # angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
+    # print(angle)
 
-    lane_angle = math.atan2(-8 - pt1[1], 503 - pt1[0]) - 3.1416
-    print(lane_angle)
+    # lane_angle = math.atan2(-8 - pt1[1], 503 - pt1[0]) - 3.1416
+    # print(lane_angle)
 
-    angle = -lane_angle - angle
-    print(angle)
+    # angle = -lane_angle - angle
+    # print(angle)
 
-    c = math.cos(angle)
-    s = math.sin(angle)
-    pt2[0] -= pt1[0]
-    pt2[1] -= pt1[1]
+    # c = math.cos(angle)
+    # s = math.sin(angle)
+    # pt2[0] -= pt1[0]
+    # pt2[1] -= pt1[1]
 
-    x = [0, 0]
-    x[0] = pt1[0] + c * pt2[0] - s * pt2[1]
-    x[1] = -pt1[1] + s * pt2[0] + c * pt2[1]
-    print(x)
+    # x = [0, 0]
+    # x[0] = pt1[0] + c * pt2[0] - s * pt2[1]
+    # x[1] = -pt1[1] + s * pt2[0] + c * pt2[1]
+    # print(x)
 
-    cv2.arrowedLine(frame, tuple(round(p) for p in pt1_copy), tuple(round(p) for p in x), (0, 255, 0), 2)
+    # cv2.arrowedLine(frame, tuple(round(p) for p in pt1_copy), tuple(round(p) for p in x), (0, 255, 0), 2)
 
     plt.imshow(frame)
     plt.show()

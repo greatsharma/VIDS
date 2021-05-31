@@ -161,7 +161,7 @@ def _line_intersect(A1, A2, B1, B2):
     x = Ax1 + uA * (Ax2 - Ax1)
     y = Ay1 + uA * (Ay2 - Ay1)
  
-    return int(x), int(y)
+    return round(x), round(y)
 
 
 def _project_point_on_line(lane, point_to_project, line_coords, point_along_which_to_project, direction_of_projection):
@@ -173,8 +173,8 @@ def _project_point_on_line(lane, point_to_project, line_coords, point_along_whic
     elif (direction_of_projection == "upper" and lane in ["1", "2"]) or (direction_of_projection == "lower" and lane in ["3", "4"]):
         ratio = -3.8
 
-    cx = int(pt2[0] + (pt1[0]-pt2[0]) * ratio)
-    cy = int(pt2[1] + (pt1[1]-pt2[1]) * ratio)
+    cx = round(pt2[0] + (pt1[0]-pt2[0]) * ratio)
+    cy = round(pt2[1] + (pt1[1]-pt2[1]) * ratio)
     pt3 = (cx, cy)
 
     return _line_intersect(pt1, pt3, line_coords[0], line_coords[1])
