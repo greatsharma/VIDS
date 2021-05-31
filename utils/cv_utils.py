@@ -99,6 +99,8 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 cv2.rectangle(frame, obj_rect[:2], obj_rect[2:], base_color, 2)
         else:
             x, y = obj_bottom[0] - 10, obj_bottom[1]
+            if obj.direction == "wrong":
+                base_color = [0, 0, 255]
 
         if obj.instspeed_list[-1] is not None and obj.direction == "right" and obj.lane not in ["5", "6"] and obj.absent_count == 0:
             self.speed_detector(obj, self.frame_count)
@@ -142,6 +144,7 @@ def draw_tracked_objects(self, frame, tracked_objs):
             path = obj.path
         else:
             path = obj.path[path_length - self.max_track_pts :]
+            path_length = len(path)
 
         prev_point = None
         for pt, perc, size in zip(path, np.linspace(0.25, 0.6, path_length), [1]*10 + [2]*15 + [3]*15):
