@@ -227,6 +227,7 @@ class VehicleTracking(object):
             tracked_objects = self.tracker.update(detection_list)
 
             for rect in ped_and_cattles_list:
+                rect = tuple(round(r) for r in rect)
                 cv2.rectangle(frame, rect[:2], rect[2:], (255, 0, 255), 2)
 
             draw_tracked_objects(self, frame, tracked_objects)
