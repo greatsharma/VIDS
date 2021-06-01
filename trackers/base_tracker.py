@@ -228,8 +228,8 @@ class BaseTracker(object):
                 rect_coords2 = self.objects[obj_id].obj_rects[-self.direction_detector_interval]
 
                 if rect_coords1 and rect_coords2:
-                    upper_coord1 = (rect_coords1[0] + rect_coords1[2]) // 2, rect_coords1[1]
-                    upper_coord2 = (rect_coords2[0] + rect_coords2[2]) // 2, rect_coords2[1]
+                    upper_coord1 = (rect_coords1[0] + rect_coords1[2]) / 2, rect_coords1[1]
+                    upper_coord2 = (rect_coords2[0] + rect_coords2[2]) / 2, rect_coords2[1]
 
                     dist = self.direction_detector(
                         self.objects[obj_id].lane,
@@ -255,8 +255,8 @@ class BaseTracker(object):
                     rect_coords2 = self.objects[obj_id].obj_rects[-2*self.direction_detector_interval]
 
                     if rect_coords1 and rect_coords2:
-                        upper_coord1 = (rect_coords1[0] + rect_coords1[2]) // 2, rect_coords1[1]
-                        upper_coord2 = (rect_coords2[0] + rect_coords2[2]) // 2, rect_coords2[1]
+                        upper_coord1 = (rect_coords1[0] + rect_coords1[2]) / 2, rect_coords1[1]
+                        upper_coord2 = (rect_coords2[0] + rect_coords2[2]) / 2, rect_coords2[1]
 
                         dist = self.direction_detector(
                             self.objects[obj_id].lane,

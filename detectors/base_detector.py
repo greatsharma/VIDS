@@ -152,7 +152,7 @@ class BaseDetector(object):
                 ped_and_cattles.append(obj_rect)
                 continue
 
-            obj_bottom = (obj_rect[0] + obj_rect[2])/2, (obj_rect[3])
+            obj_bottom = (obj_rect[0] + obj_rect[2])/2, obj_rect[3]
             lane = self.lane_detector(obj_bottom)
 
             if lane is None:
