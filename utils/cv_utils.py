@@ -71,9 +71,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
 
         if (
             (
-                obj.absent_count > self.max_absent // 2
-                and (obj.state[1], obj.state[3]) == (0, 0)
+                (obj.state[1], obj.state[3]) == (0, 0)
+                and obj.absent_count > self.max_absent // 2
             )
+            or (obj.direction == "wrong" and obj.absent_count > self.max_absent // 2)
             or (obj.lane in ["1", "2", "5"] and obj.direction in ["right", "parked"] and position1 > 0)
             or (obj.lane in ["3", "4", "6"] and obj.direction in ["right", "parked"] and position1 < 0)
             or (obj.lane in ["1", "2", "5"] and obj.direction == "wrong" and position2 < 0)
