@@ -218,7 +218,7 @@ class BaseTracker(object):
                 self.objects[obj_id].path[-1],
                 self.objects[obj_id].path[-self.direction_detector_interval],
             )
-            if dist >= 0:
+            if dist >= -3:
                 self.objects[obj_id].direction = "right"
             else:
                 self.objects[obj_id].direction = "wrong"
@@ -237,7 +237,7 @@ class BaseTracker(object):
                         upper_coord2,
                     )
 
-                    if dist >= 0:
+                    if dist >= -3:
                         self.objects[obj_id].direction = "right"
 
             if len(self.objects[obj_id].path) > 2*self.direction_detector_interval:
