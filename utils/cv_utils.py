@@ -1,5 +1,4 @@
 import cv2
-import math
 import numpy as np
 
 
@@ -20,14 +19,14 @@ def draw_text_with_backgroud(
     y,
     font_scale,
     thickness=1,
-    font=cv2.FONT_HERSHEY_COMPLEX,
+    font=cv2.FONT_HERSHEY_SIMPLEX,
     background=(0,0,0),
     foreground=(255,255,255),
     box_coords_1=(-5, 5),
     box_coords_2=(5, -5),
 ):
     (text_width, text_height) = cv2.getTextSize(
-        text, font, fontScale=font_scale, thickness=1
+        text, font, fontScale=font_scale, thickness=thickness
     )[0]
 
     box_coords = (
@@ -133,10 +132,10 @@ def draw_tracked_objects(self, frame, tracked_objs):
                 to_write,
                 x,
                 y,
-                font_scale=0.35,
+                font_scale=0.32,
                 thickness=1,
-                box_coords_1=(-4, 4),
-                box_coords_2=(6, -6),
+                box_coords_1=(-2, 3),
+                box_coords_2=(3, -6),
             )
 
         if path_length <= self.max_track_pts:
