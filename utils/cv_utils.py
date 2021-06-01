@@ -115,33 +115,49 @@ def draw_tracked_objects(self, frame, tracked_objs):
             to_write = "parked"
         elif obj.direction == "wrong":
             to_write = "wrong-way"
-
-        path_length = len(obj.path)
-        condition = path_length < 20
         
-        if not condition:
-            (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"][0]
-            position1 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
-            if position1 < 0:
+        (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"][1]
+        position1 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
+
+        condition = False
+
+        if position1 < 0:
+            if obj.lane in "125":
+                (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"][0]
+            else:
+                (Ax, Ay), (Bx, By) = self.camera_meta[f"lane{obj.lane}"]["mid_ref"][2]
+
+            position2 = (obj_bottom[0] - Ax) * (By - Ay) - (obj_bottom[1] - Ay) * (Bx - Ax)
+            if position2 < 0:
                 condition = True
 
         if condition:
             # to_write = str(obj.objid) + ", " + to_write
+            fontscale = 0.33
+            if position2 > 0:
+                fontscale = 0.27
+
             draw_text_with_backgroud(
                 frame,
                 to_write,
                 x,
                 y,
-                font_scale=0.32,
+                font_scale=fontscale,
                 thickness=1,
                 box_coords_1=(-2, 3),
                 box_coords_2=(3, -6),
             )
 
-        if path_length <= self.max_track_pts:
+        mtp = self.max_track_pts
+        if position1 > 0:
+            mtp = self.max_track_pts // 2
+        
+        path_length = len(obj.path)
+
+        if path_length <= mtp:
             path = obj.path
         else:
-            path = obj.path[path_length - self.max_track_pts :]
+            path = obj.path[path_length - mtp :]
             path_length = len(path)
 
         # prev_point = tuple(round(p) for p in path[0])
