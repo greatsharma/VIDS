@@ -6,11 +6,12 @@ import argparse
 import datetime
 import subprocess
 import numpy as np
+from collections import deque
 
 from camera_metadata import CAMERA_METADATA
 from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
-from utils import draw_tracked_objects
+from utils import draw_tracked_objects, draw_text_with_backgroud
 from utils import init_lane_detector, init_direction_detector, init_classupdate_line
 from utils import init_position_wrt_midrefs, init_speed_detector
 
@@ -61,6 +62,10 @@ class VehicleTracking(object):
         if self.output_fps is None:
             self.output_fps = int(self.vidcap.get(cv2.CAP_PROP_FPS))
 
+        self.logbuffer_length = 13
+        self.logged_ids = []
+        self.log_buffer = deque([])
+
         self._init_detector()
         self._init_tracker()
 
@@ -73,6 +78,11 @@ class VehicleTracking(object):
             )
         else:
             self.frame_h, self.frame_w = self.resize
+
+        self.img_for_log = np.zeros(
+            (self.frame_h, int(self.frame_w / 2.4), 3), dtype=np.uint8
+        )
+        self.img_for_log[:, :, 0:3] = (243, 227, 218)
 
         initial_frame = cv2.resize(
             initial_frame,
@@ -139,6 +149,153 @@ class VehicleTracking(object):
                 self.max_absent,
             )
 
+    def _log(self, tracked_objs):
+        lane_counts = {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0
+        }
+
+        for obj in tracked_objs.values():
+            if obj.lane in ["5", "6"]:
+                continue
+
+            obj_bottom = (
+                obj.obj_bottom
+                if self.tracker_type == "centroid"
+                else (obj.state[0], obj.state[2])
+            )
+
+            lane_counts[obj.lane] += 1
+
+            if obj.lane in ["1", "2"]:
+                (A1x, A1y), (B1x, B1y) = self.camera_meta["lane" + obj.lane]["speed_reflines"][0]
+                (A2x, A2y), (B2x, B2y) = self.camera_meta["lane" + obj.lane]["speed_reflines"][3]
+            else:
+                (A1x, A1y), (B1x, B1y) = self.camera_meta["lane" + obj.lane]["speed_reflines"][3]
+                (A2x, A2y), (B2x, B2y) = self.camera_meta["lane" + obj.lane]["speed_reflines"][0]
+
+            Px, Py = obj_bottom
+            position1 = (Px - A1x) * (B1y - A1y) - (Py - A1y) * (B1x - A1x)
+            position2 = (Px - A2x) * (B2y - A2y) - (Py - A2y) * (B2x - A2x)
+
+            if position1 > 0 and position2 < 0 and obj.starttime is None:
+                obj.starttime = datetime.datetime.now()
+
+            elif (
+                (position1 < 0 or position2 > 0)
+                and obj.endtime is None
+                and obj.starttime is not None
+            ):
+                obj.endtime = datetime.datetime.now()
+
+            if (
+                (obj.starttime is not None)
+                and (obj.endtime is not None)
+                and (obj.objid not in self.logged_ids)
+            ):
+
+                obj_lane = f"lane {obj.lane}"
+                obj_class = obj.obj_class[0]
+                obj_time = obj.starttime.strftime("%Y:%m:%d:%H:%M:%S")[11:]
+                obj_direction = obj.direction
+                obj_speed = str(obj.instspeed_list[-1]) + " kmph"
+                if obj_direction == "wrong" or obj_speed == "0 kmph":
+                    obj_speed = ""
+
+                log_tuple = (obj_lane, obj_class, obj_time, obj_speed, obj_direction)
+
+                if len(self.log_buffer) >= self.logbuffer_length:
+                    self.log_buffer.rotate(-1)
+                    self.log_buffer[12] = log_tuple
+                else:
+                    self.log_buffer.append(log_tuple)
+
+                self.logged_ids.append(obj.objid)
+
+        self.img_for_log[:, :, 0:3] = (243, 227, 218)
+
+        for name, xcoord in zip(["Lane", "Class", "Time", "Speed"], [15, 90, 180, 290]):
+            draw_text_with_backgroud(
+                self.img_for_log,
+                name,
+                x=xcoord,
+                y=80,
+                font_scale=0.6,
+                thickness=2,
+                font=cv2.FONT_HERSHEY_COMPLEX,
+                background=None,
+                foreground=(10, 10, 10),
+            )
+
+        y = 110
+        for row in self.log_buffer:
+            foreground=(0, 100, 0)
+            if row[-1] == "wrong":
+                foreground=(0, 0, 255)
+
+            for col, xcoord in zip(row, [15, 100, 170, 280]):
+                draw_text_with_backgroud(
+                    self.img_for_log,
+                    col,
+                    x=xcoord,
+                    y=y,
+                    font_scale=0.5,
+                    thickness=1,
+                    font=cv2.FONT_HERSHEY_COMPLEX,
+                    background=None,
+                    foreground=foreground
+                )
+            y += 20
+
+        draw_text_with_backgroud(
+            self.img_for_log,
+            "Lanes Congestion",
+            x=15, y=420,
+            font_scale=0.6,
+            thickness=2,
+            font=cv2.FONT_HERSHEY_COMPLEX,
+            background=None,
+            foreground=(10, 10, 10),
+            )
+
+        for idx, (xcoord, ycoord) in enumerate([(15, 460), (15, 500), (210, 460), (210,500)]):
+            txt = f"Lane{idx+1} - "
+            draw_text_with_backgroud(
+                self.img_for_log,
+                txt,
+                x=xcoord,
+                y=ycoord,
+                font_scale=0.5,
+                thickness=1,
+                font=cv2.FONT_HERSHEY_COMPLEX,
+                background=None,
+                foreground=(10, 10, 10),
+            )
+
+            foreground = (0, 100, 0)
+            txt = "light"
+
+            if lane_counts[str(idx+1)] > 10:
+                foreground = (0, 0, 255)
+                txt = "heavy"
+            elif lane_counts[str(idx+1)] > 5:
+                foreground = (0, 140, 255)
+                txt = "medium"
+
+            draw_text_with_backgroud(
+                self.img_for_log,
+                txt,
+                x=xcoord + 80,
+                y=ycoord,
+                font_scale=0.5,
+                thickness=1,
+                font=cv2.FONT_HERSHEY_COMPLEX,
+                background=None,
+                foreground=foreground,
+            )
+
     def _compress_video(self, input_path, output_path, del_prev_video):
         status = subprocess.call(
             [
@@ -193,7 +350,7 @@ class VehicleTracking(object):
                 self.video_filename,
                 cv2.VideoWriter_fourcc("M", "J", "P", "G"),
                 self.output_fps,
-                (960, 540),
+                (1360, 540),
             )
 
         tik1 = time.time()
@@ -226,6 +383,8 @@ class VehicleTracking(object):
             detection_list, ped_and_cattles_list = self.detector.detect(frame)
             tracked_objects = self.tracker.update(detection_list)
 
+            self._log(tracked_objects)
+
             for rect in ped_and_cattles_list:
                 rect = tuple(round(r) for r in rect)
                 cv2.rectangle(frame, rect[:2], rect[2:], (255, 0, 255), 2)
@@ -250,10 +409,22 @@ class VehicleTracking(object):
                     for ref in self.camera_meta[f"lane{l}"]["speed_reflines"]:
                         cv2.line(frame, ref[0], ref[1], (255, 0, 255), 1)
 
-            if self.output:
-                self.videowriter.write(frame)
+            draw_text_with_backgroud(
+                self.img_for_log,
+                "VIDS",
+                x=150, y=30,
+                font_scale=1,
+                thickness=2,
+                font=cv2.FONT_HERSHEY_COMPLEX,
+                background=None,
+                foreground=(10, 10, 10),
+                )
 
-            cv2.imshow("VIDS", frame)
+            out_frame = np.hstack((frame, self.img_for_log))
+            if self.output:
+                self.videowriter.write(out_frame)
+
+            cv2.imshow("VIDS", out_frame)
             key = cv2.waitKey(1)
             
             if key == ord("p"):

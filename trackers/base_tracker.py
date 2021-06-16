@@ -156,7 +156,7 @@ class BaseTracker(object):
                 )
             else:
                 self.objects[obj_id].eos.semi_majoraxis = max(
-                    round(2.25 * self.objects[obj_id].eos.last_d), 20
+                    round(2.25 * self.objects[obj_id].eos.last_d), 25
                 )
                 self.objects[obj_id].eos.semi_minoraxis = max(
                     round(self.objects[obj_id].eos.semi_majoraxis / 2), 15
