@@ -260,8 +260,7 @@ class VehicleTracking(object):
             foreground=(10, 10, 10),
             )
 
-        for idx, (xcoord, ycoord) in enumerate([(15, 460), (15, 500), (210, 460), (210,500)]):
-            txt = f"Lane{idx+1} - "
+        for txt, (xcoord, ycoord) in zip(["Lane 1+2 - ", "Lane 3+4 - "], [(15, 460), (15, 500)]):
             draw_text_with_backgroud(
                 self.img_for_log,
                 txt,
@@ -274,20 +273,28 @@ class VehicleTracking(object):
                 foreground=(10, 10, 10),
             )
 
+            idx = (
+                1
+                if txt == "Lane 1+2 - "  else
+                3              
+            )
+
+            total_vehicle = lane_counts[str(idx)] + lane_counts[str(idx+1)]
+
             foreground = (0, 100, 0)
             txt = "light"
 
-            if lane_counts[str(idx+1)] > 10:
+            if total_vehicle > 10:
                 foreground = (0, 0, 255)
                 txt = "heavy"
-            elif lane_counts[str(idx+1)] > 5:
+            elif total_vehicle > 5:
                 foreground = (0, 140, 255)
                 txt = "medium"
 
             draw_text_with_backgroud(
                 self.img_for_log,
                 txt,
-                x=xcoord + 80,
+                x=xcoord + 120,
                 y=ycoord,
                 font_scale=0.5,
                 thickness=1,
