@@ -105,17 +105,22 @@ while vidcap.isOpened():
     )
     cv2.polylines(frame,sideway2_coords,isClosed=True,color=(0, 0, 0),thickness=2,)
 
+    # lane_ref
     cv2.circle(frame,(5, 350),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(56, 497),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(245, 510),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(757, 523),radius=3,color=(255,0,0),thickness=-1)
     cv2.circle(frame,(930, 506),radius=3,color=(255,0,0),thickness=-1)
 
-    # cv2.line(frame, (86,380), (372,403), (255, 255, 255), 2)
-    # cv2.line(frame, (184,289), (404,304), (255, 255, 255), 2)
-    # cv2.line(frame, (608,366), (887,359), (255, 255, 255), 2)
-    # cv2.line(frame, (577,267), (788,265), (255, 255, 255), 2)
+    # mid_ref
+    cv2.line(frame, (200, 241), (420, 259), (255, 255, 0), 1)
+    cv2.line(frame, (300, 171), (445, 183), (255, 255, 0), 1)
+    cv2.line(frame, (360, 119), (460, 127), (255, 255, 0), 1)
+    cv2.line(frame, (535, 131), (662, 135), (255, 255, 0), 1)
+    cv2.line(frame, (550, 187), (733, 190), (255, 255, 0), 1)
+    cv2.line(frame, (575, 267), (825, 270), (255, 255, 0), 1)
 
+    # classupdate_line
     # cv2.line(frame, (12, 270), (12, 408), (255, 0, 255), 1)
     # cv2.line(frame, (168,190), (224,231), (255, 0, 255), 2)
     # cv2.line(frame, (12, 452), (348, 483), (255, 0, 255), 2)
@@ -125,46 +130,42 @@ while vidcap.isOpened():
     # cv2.line(frame, (768, 218), (800, 185), (255, 0, 255), 2)
     # cv2.line(frame, (945, 364), (935, 270), (255, 0, 255), 1)
 
-    cv2.line(frame, (200, 241), (420, 259), (255, 255, 0), 1)
-    cv2.line(frame, (300, 171), (445, 183), (255, 255, 0), 1)
-    cv2.line(frame, (360, 119), (460, 127), (255, 255, 0), 1)
-
-    cv2.line(frame, (535, 131), (662, 135), (255, 255, 0), 1)
-    cv2.line(frame, (550, 187), (733, 190), (255, 255, 0), 1)
-    cv2.line(frame, (575, 267), (825, 270), (255, 255, 0), 1)
-
+    # deregistering_line_rightdirection
     cv2.line(frame, (395,93), (471,98), (0, 255, 0), 1)
-    cv2.line(frame, (529, 100), (613, 100), (0, 255, 0), 1)
+    cv2.line(frame, (644, 488), (844, 484), (0,255,0), 1)
+    cv2.line(frame, (810,436), (957,424), (0,255,0), 1)
 
+    # deregistering_line_wrongdirection
     cv2.line(frame, (6,458), (345,494), (0,0,255), 1)
-    cv2.line(frame, (644, 488), (844, 484), (0,0,255), 1)
-    cv2.line(frame, (810,436), (957,424), (0,0,255), 1)
+    cv2.line(frame, (529, 100), (613, 100), (0, 0, 255), 1)
 
-    coords = [
-        [(93, 468), (359, 159)],
-        [(254, 484), (420, 156)],
-        [(555, 110), (728, 456)],
-        [(597, 111), (910, 469)],
-        [(22.4, 444.9), (378.3, 112.9)],
-        [(339.61, 495.84), (467.45, 102.44)],
-    ]
-
-    for pt1, pt2 in coords:
-        angle = math.atan2((pt2[1] - pt1[1]), (pt2[0] - pt1[0]))
-        # print(angle)
-        cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), color=(0,0,255), thickness=2, tipLength=0.02)
-
+    # speed_reflines, lane1, lane2
     cv2.line(frame, (30,421), (380,421), (255, 0, 0), 1)
     cv2.line(frame, (50,362), (400,362), (255, 0, 0), 1)
     cv2.line(frame, (110,335), (400,335), (255, 0, 0), 1)
     cv2.line(frame, (145,297), (410,297), (255, 0, 0), 1)
     cv2.line(frame, (165,278), (420,278), (255, 0, 0), 1)
 
+    # speed_reflines, lane3, lane4
     cv2.line(frame, (570,266), (850,266), (255, 0, 0), 1)
     cv2.line(frame, (570,298), (870,298), (255, 0, 0), 1)
     cv2.line(frame, (570,319), (900,319), (255, 0, 0), 1)
     cv2.line(frame, (600,364), (950,364), (255, 0, 0), 1)
     cv2.line(frame, (600,398), (950,398), (255, 0, 0), 1)
+
+    # coords = [
+    #     [(93, 468), (359, 159)],
+    #     [(254, 484), (420, 156)],
+    #     [(555, 110), (728, 456)],
+    #     [(597, 111), (910, 469)],
+    #     [(22.4, 444.9), (378.3, 112.9)],
+    #     [(339.61, 495.84), (467.45, 102.44)],
+    # ]
+
+    # for pt1, pt2 in coords:
+    #     angle = math.atan2((pt2[1] - pt1[1]), (pt2[0] - pt1[0]))
+    #     # print(angle)
+    #     cv2.arrowedLine(frame, tuple(round(p) for p in pt1), tuple(round(p) for p in pt2), color=(0,0,255), thickness=2, tipLength=0.02)
 
     # pt5 = (259, 335)
     # cv2.circle(frame,pt5,radius=1,color=(0,255,0),thickness=-1)
@@ -184,6 +185,8 @@ while vidcap.isOpened():
     # cv2.line(frame, tuple(round(p) for p in pt3), pt4, (0, 0, 255), 1)
 
     # pt6 = line_intersect(pt1,pt2,pt3,pt4)# (501, -2)
+    # print(pt6)
+
     # c1, c2 = pt5, pt6
     # cx = round(c2[0] + (c1[0]-c2[0]) * 3.8)
     # cy = round(c2[1] + (c1[1]-c2[1]) * 3.8)
@@ -236,7 +239,7 @@ while vidcap.isOpened():
     # angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
     # print(angle)
 
-    # lane_angle = math.atan2(-8 - pt1[1], 503 - pt1[0]) - 3.1416
+    # lane_angle = math.atan2(-2 - pt1[1], 501 - pt1[0]) - 3.1416
     # print(lane_angle)
 
     # angle = -lane_angle - angle
