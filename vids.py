@@ -4,16 +4,23 @@ import sys
 import time
 import argparse
 import datetime
+import threading
 import subprocess
 import numpy as np
 from collections import deque
+from flask import Flask
+from flask import Response
+from flask import render_template
+from waitress import serve
 
 from camera_metadata import CAMERA_METADATA
-from detectors import VanillaYoloDetector
 from trackers import CentroidTracker, KalmanTracker
 from utils import draw_tracked_objects, draw_text_with_backgroud
 from utils import init_lane_detector, init_direction_detector, init_classupdate_line
 from utils import init_position_wrt_midrefs, init_speed_detector
+
+
+app = Flask(__name__)
 
 
 class VehicleTracking(object):
@@ -69,6 +76,8 @@ class VehicleTracking(object):
         self._init_detector()
         self._init_tracker()
 
+        self.lock = threading.Lock()
+
     def _init_detector(self):
         _, initial_frame = self.vidcap.read()
 
@@ -93,12 +102,14 @@ class VehicleTracking(object):
         lane_detector = init_lane_detector(self.camera_meta)
 
         if self.inference_type == "trt":
+            from detectors.trt_detector import TrtYoloDetector
             self.detector = TrtYoloDetector(
                 initial_frame,
                 lane_detector,
                 self.detection_thresh,
             )
         else:
+            from detectors.yolo_detector import VanillaYoloDetector
             self.detector = VanillaYoloDetector(
                 initial_frame,
                 lane_detector,
@@ -341,6 +352,7 @@ class VehicleTracking(object):
 
     def run(self):
         self.frame_count = 0
+        self.out_frame = None
 
         date = datetime.datetime.now()
         date = date.strftime("%d_%m_%Y_%H:%M:%S")
@@ -427,17 +439,17 @@ class VehicleTracking(object):
                 foreground=(10, 10, 10),
                 )
 
-            out_frame = np.hstack((frame, self.img_for_log))
+            self.out_frame = np.hstack((frame, self.img_for_log))
             if self.output:
-                self.videowriter.write(out_frame)
+                self.videowriter.write(self.out_frame)
 
-            cv2.imshow("VIDS", out_frame)
-            key = cv2.waitKey(1)
+            # cv2.imshow("VIDS", out_frame)
+            # key = cv2.waitKey(1)
             
-            if key == ord("p"):
-                cv2.waitKey(-1)
-            elif key == ord("q"):
-                break
+            # if key == ord("p"):
+            #     cv2.waitKey(-1)
+            # elif key == ord("q"):
+            #     break
 
             tok = time.time()
             curr_fps = round(1.0 / (tok-tik2), 4)
@@ -449,6 +461,15 @@ class VehicleTracking(object):
     
         self.vidcap.release()
         cv2.destroyAllWindows()
+
+    def gen_frame(self):
+        while True:
+            with self.lock:
+                success, buffer = cv2.imencode(".jpg", self.out_frame)
+                if not success:
+                    break
+                frame_ = buffer.tobytes()
+            yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_ + b"\r\n")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -563,10 +584,22 @@ if __name__ == "__main__":
         help="execution mode, either `debug`, `release`, `pretty`",
     )
 
-    args = vars(ap.parse_args())
+    ap.add_argument(
+        "-ip",
+        type=str,
+        required=False,
+        default="127.0.0.1"
+    )
 
-    if args["inference"] == "trt":
-        from detectors.trt_detector import TrtYoloDetector
+    ap.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        required=False,
+        default=5000
+    )
+
+    args = vars(ap.parse_args())
 
     vt_obj = VehicleTracking(
         args["input"],
@@ -584,4 +617,16 @@ if __name__ == "__main__":
     )
 
     print("\n")
-    vt_obj.run()
+    t = threading.Thread(target=vt_obj.run)
+    t.daemon = True
+    t.start()
+
+    @app.route("/")
+    def index():
+        return render_template("index.html")
+
+    @app.route("/video_feed")
+    def video_feed():
+        return Response(vt_obj.gen_frame(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+    serve(app, host="127.0.0.1", port=args["port"])
