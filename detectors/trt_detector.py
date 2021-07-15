@@ -1,16 +1,25 @@
-import cv2
+from __future__ import print_function
+
+import ctypes
+
 import numpy as np
+import cv2
 import tensorrt as trt
 import pycuda.autoinit
 import pycuda.driver as cuda
-
 from detectors import BaseDetector
 
 
-TRT_LOGGER = trt.Logger(trt.Logger.Severity.ERROR)
+try:
+    ctypes.cdll.LoadLibrary('detectors/libyolo_layer.so')
+except OSError as e:
+    raise SystemExit('ERROR: failed to load detectors/libyolo_layer.so.  '
+                     'Did you forget to do a "make" in the "./plugins/" '
+                     'subdirectory?') from e
 
-# Simple helper data class that's a little nicer to use than a 2-tuple.
+
 class HostDeviceMem(object):
+    """Simple helper data class that's a little nicer to use than a 2-tuple."""
     def __init__(self, host_mem, device_mem):
         self.host = host_mem
         self.device = device_mem
@@ -22,96 +31,183 @@ class HostDeviceMem(object):
         return self.__str__()
 
 
+def allocate_buffers(engine, batch_size):
+    """Allocates all host/device in/out buffers required for an engine."""
+    inputs = []
+    outputs = []
+    bindings = []
+    stream = cuda.Stream()
+    assert 3 <= len(engine) <= 4  # expect 1 input, plus 2 or 3 outpus
+    
+    for binding in engine:
+        binding_dims = engine.get_binding_shape(binding)
+
+        if len(binding_dims) == 4:
+            # explicit batch case (TensorRT 7+)
+            size = trt.volume(binding_dims) * batch_size
+        elif len(binding_dims) == 3:
+            # implicit batch case (TensorRT 6 or older)
+            size = trt.volume(binding_dims) * engine.max_batch_size
+        else:
+            raise ValueError('bad dims of binding %s: %s' % (binding, str(binding_dims)))
+        
+        dtype = trt.nptype(engine.get_binding_dtype(binding))
+        # Allocate host and device buffers
+        host_mem = cuda.pagelocked_empty(size, dtype)
+        device_mem = cuda.mem_alloc(host_mem.nbytes)
+        # Append the device buffer to device bindings.
+        bindings.append(int(device_mem))
+        # Append to the appropriate list.
+        if engine.binding_is_input(binding):
+            inputs.append(HostDeviceMem(host_mem, device_mem))
+        else:
+            # each grid has 3 anchors, each anchor generates a detection
+            # output of 7 float32 values
+            assert size % 7 == 0
+            outputs.append(HostDeviceMem(host_mem, device_mem))
+    return inputs, outputs, bindings, stream
+
+
+def do_inference(context, bindings, inputs, outputs, stream):
+    """do_inference_v2 (for TensorRT 7.0+)
+
+    This function is generalized for multiple inputs/outputs for full
+    dimension networks.
+    Inputs and outputs are expected to be lists of HostDeviceMem objects.
+    """
+    # Transfer input data to the GPU.
+    [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
+    # Run inference.
+    context.execute_async_v2(bindings=bindings, stream_handle=stream.handle)
+    # Transfer predictions back from the GPU.
+    [cuda.memcpy_dtoh_async(out.host, out.device, stream) for out in outputs]
+    # Synchronize the stream
+    stream.synchronize()
+    # Return only the host outputs.
+    return [out.host for out in outputs]
+
+
+def _nms_boxes(detections, nms_threshold):
+    """Apply the Non-Maximum Suppression (NMS) algorithm on the bounding
+    boxes with their confidence scores and return an array with the
+    indexes of the bounding boxes we want to keep.
+
+    # Args
+        detections: Nx7 numpy arrays of
+                    [[x, y, w, h, box_confidence, class_id, class_prob],
+                     ......]
+    """
+    x_coord = detections[:, 0]
+    y_coord = detections[:, 1]
+    width = detections[:, 2]
+    height = detections[:, 3]
+    box_confidences = detections[:, 4] * detections[:, 6]
+
+    areas = width * height
+    ordered = box_confidences.argsort()[::-1]
+
+    keep = list()
+    while ordered.size > 0:
+        # Index of the current element:
+        i = ordered[0]
+        keep.append(i)
+        xx1 = np.maximum(x_coord[i], x_coord[ordered[1:]])
+        yy1 = np.maximum(y_coord[i], y_coord[ordered[1:]])
+        xx2 = np.minimum(x_coord[i] + width[i], x_coord[ordered[1:]] + width[ordered[1:]])
+        yy2 = np.minimum(y_coord[i] + height[i], y_coord[ordered[1:]] + height[ordered[1:]])
+
+        width1 = np.maximum(0.0, xx2 - xx1 + 1)
+        height1 = np.maximum(0.0, yy2 - yy1 + 1)
+        intersection = width1 * height1
+        union = (areas[i] + areas[ordered[1:]] - intersection)
+        iou = intersection / union
+        indexes = np.where(iou <= nms_threshold)[0]
+        ordered = ordered[indexes + 1]
+
+    keep = np.array(keep)
+    return keep
+
+
+def _postprocess_yolo(trt_outputs, img_w, img_h, conf_th, nms_threshold):
+    """Postprocess TensorRT outputs.
+
+    # Args
+        trt_outputs: a list of 2 or 3 tensors, where each tensor
+                    contains a multiple of 7 float32 numbers in
+                    the order of [x, y, w, h, box_confidence, class_id, class_prob]
+        conf_th: confidence threshold
+
+    # Returns
+        boxes, scores, classes (after NMS)
+    """
+    # filter low-conf detections and concatenate results of all yolo layers
+    detections = []
+    for o in trt_outputs:
+        dets = o.reshape((-1, 7))
+        dets = dets[dets[:, 4] * dets[:, 6] >= conf_th]
+        detections.append(dets)
+    detections = np.concatenate(detections, axis=0)
+
+    if len(detections) == 0:
+        boxes = np.zeros((0, 4), dtype=np.int)
+        scores = np.zeros((0,), dtype=np.float32)
+        classes = np.zeros((0,), dtype=np.float32)
+    else:
+        # scale x, y, w, h from [0, 1] to pixel values
+        old_h, old_w = img_h, img_w
+
+        detections[:, 0:4] *= np.array(
+            [old_w, old_h, old_w, old_h], dtype=np.float32)
+
+        # NMS
+        nms_detections = np.zeros((0, 7), dtype=detections.dtype)
+        for class_id in set(detections[:, 5]):
+            idxs = np.where(detections[:, 5] == class_id)
+            cls_detections = detections[idxs]
+            keep = _nms_boxes(cls_detections, nms_threshold)
+            nms_detections = np.concatenate(
+                [nms_detections, cls_detections[keep]], axis=0)
+
+        xx = nms_detections[:, 0].reshape(-1, 1)
+        yy = nms_detections[:, 1].reshape(-1, 1)
+                
+        ww = nms_detections[:, 2].reshape(-1, 1)
+        hh = nms_detections[:, 3].reshape(-1, 1)
+        boxes = np.concatenate([xx, yy, xx+ww, yy+hh], axis=1) + 0.5
+        boxes = boxes.astype(np.int)
+        scores = nms_detections[:, 4] * nms_detections[:, 6]
+        classes = nms_detections[:, 5]
+    return boxes, scores, classes
+
+
 class TrtYoloDetector(BaseDetector):
-    def _allocate_buffers(self, engine, batch_size):
-        # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
-        inputs = []
-        outputs = []
-        bindings = []
-        stream = cuda.Stream()
 
-        for binding in engine:
-            size = trt.volume(engine.get_binding_shape(binding)) * batch_size
-            dims = engine.get_binding_shape(binding)
+    def _warmup_trt(self):
+        """Initialize TensorRT plugins, engine and conetxt."""
+        self.cuda_ctx = None
+        if self.cuda_ctx:
+            self.cuda_ctx.push()
 
-            # in case batch dimension is -1 (dynamic)
-            if dims[0] < 0:
-                size *= -1
+        self.trt_logger = trt.Logger(trt.Logger.Severity.ERROR)
+        self.path_to_trtengine = self.path_to_yolostuffs + "yolov4-tiny-416_mysys.trt"
 
-            dtype = trt.nptype(engine.get_binding_dtype(binding))
-            # Allocate host and device buffers
-            host_mem = cuda.pagelocked_empty(size, dtype)
-            device_mem = cuda.mem_alloc(host_mem.nbytes)
-            # Append the device buffer to device bindings.
-            bindings.append(int(device_mem))
-            # Append to the appropriate list.
-            if engine.binding_is_input(binding):
-                inputs.append(HostDeviceMem(host_mem, device_mem))
-            else:
-                outputs.append(HostDeviceMem(host_mem, device_mem))
+        print("Reading engine from file {}".format(self.path_to_trtengine))
+        with open(self.path_to_trtengine, "rb") as f, trt.Runtime(self.trt_logger) as runtime:
+            self.engine = runtime.deserialize_cuda_engine(f.read())
+ 
+        try:
+            self.context = self.engine.create_execution_context()
+            self.context.set_binding_shape(0, (1, 3, self.yolo_height, self.yolo_width))
+            self.inputs, self.outputs, self.bindings, self.stream = allocate_buffers(self.engine ,1)
+        except Exception as e:
+            raise RuntimeError('fail to allocate CUDA resources') from e
+        finally:
+            if self.cuda_ctx:
+                self.cuda_ctx.pop()
 
-        return inputs, outputs, bindings, stream
-
-    def _do_inference(self, bindings, inputs, outputs, stream):
-        """
-        This function is generalized for multiple inputs/outputs.
-        inputs and outputs are expected to be lists of HostDeviceMem objects.
-        """
-
-        # Transfer input data to the GPU.
-        [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
-
-        # Run inference.
-        self.context.execute_async(bindings=bindings, stream_handle=stream.handle)
-
-        # Transfer predictions back from the GPU.
-        [cuda.memcpy_dtoh_async(out.host, out.device, stream) for out in outputs]
-
-        # Synchronize the stream
-        stream.synchronize()
-
-        # Return only the host outputs.
-        return [out.host for out in outputs]
-
-    def _nms_cpu(self, boxes, confs, nms_thresh, min_mode=False):
-        # print(boxes.shape)
-        x1 = boxes[:, 0]
-        y1 = boxes[:, 1]
-        x2 = boxes[:, 2]
-        y2 = boxes[:, 3]
-
-        areas = (x2 - x1) * (y2 - y1)
-        order = confs.argsort()[::-1]
-
-        keep = []
-        while order.size > 0:
-            idx_self = order[0]
-            idx_other = order[1:]
-
-            keep.append(idx_self)
-
-            xx1 = np.maximum(x1[idx_self], x1[idx_other])
-            yy1 = np.maximum(y1[idx_self], y1[idx_other])
-            xx2 = np.minimum(x2[idx_self], x2[idx_other])
-            yy2 = np.minimum(y2[idx_self], y2[idx_other])
-
-            w = np.maximum(0.0, xx2 - xx1)
-            h = np.maximum(0.0, yy2 - yy1)
-            inter = w * h
-
-            if min_mode:
-                over = inter / np.minimum(areas[order[0]], areas[order[1:]])
-            else:
-                over = inter / (areas[order[0]] + areas[order[1:]] - inter)
-
-            inds = np.where(over <= nms_thresh)[0]
-            order = order[inds + 1]
-
-        return np.array(keep)
-
-    def detect(self, curr_frame) -> list:
+    def detect(self, curr_frame):
+        in_shape = curr_frame.shape
         curr_frame = cv2.cvtColor(curr_frame, code=cv2.COLOR_BGR2RGB)
-
         curr_frame = cv2.resize(
             curr_frame,
             (
@@ -121,70 +217,43 @@ class TrtYoloDetector(BaseDetector):
             interpolation=cv2.INTER_LINEAR,
         )
 
+        # HWC -> CHW
         curr_frame = np.transpose(curr_frame, (2, 0, 1)).astype(np.float32)
         curr_frame = np.expand_dims(curr_frame, axis=0)
         curr_frame /= 255.0
-        curr_frame = np.ascontiguousarray(curr_frame)
 
-        inputs, outputs, bindings, stream = self.buffers
-        inputs[0].host = curr_frame
+        # Set host input to the image. The do_inference() function
+        # will copy the input to the GPU before executing.
+        self.inputs[0].host = np.ascontiguousarray(curr_frame)
 
-        trt_outputs = self._do_inference(
-            bindings=bindings, inputs=inputs, outputs=outputs, stream=stream
-        )
-        trt_outputs[0] = trt_outputs[0].reshape(1, -1, 1, 4)
-        trt_outputs[1] = trt_outputs[1].reshape(1, -1, self.num_classes)
+        if self.cuda_ctx:
+            self.cuda_ctx.push()
 
-        # [batch, num, 1, 4]
-        box_array = trt_outputs[0]
+        trt_outputs = do_inference(
+            context=self.context,
+            bindings=self.bindings,
+            inputs=self.inputs,
+            outputs=self.outputs,
+            stream=self.stream)
 
-        # [batch, num, num_classes]
-        confs = trt_outputs[1]
+        if self.cuda_ctx:
+            self.cuda_ctx.pop()
 
-        if type(box_array).__name__ != "ndarray":
-            box_array = box_array.cpu().detach().numpy()
-            confs = confs.cpu().detach().numpy()
+        boxes, scores, classes = _postprocess_yolo(
+            trt_outputs, in_shape[1], in_shape[0], self.detection_thresh,
+            nms_threshold=0.5)
 
-        # [batch, num, 4]
-        box_array = box_array[:, :, 0]
-
-        # [batch, num, num_classes] --> [batch, num]
-        max_conf = np.max(confs, axis=2)
-        max_id = np.argmax(confs, axis=2)
-
-        argwhere = max_conf[0] > self.detection_thresh
-        l_box_array = box_array[0, argwhere, :]
-        l_max_conf = max_conf[0, argwhere]
-        l_max_id = max_id[0, argwhere]
+        boxes[:, [0, 2]] = np.clip(boxes[:, [0, 2]], 0, in_shape[1]-1)
+        boxes[:, [1, 3]] = np.clip(boxes[:, [1, 3]], 0, in_shape[0]-1)
 
         trt_detections = []
-        # nms for each class
-        for j in range(self.num_classes):
-
-            cls_argwhere = l_max_id == j
-            ll_box_array = l_box_array[cls_argwhere, :]
-            ll_max_conf = l_max_conf[cls_argwhere]
-            ll_max_id = l_max_id[cls_argwhere]
-
-            keep = self._nms_cpu(ll_box_array, ll_max_conf, nms_thresh=0.5)
-
-            if keep.size > 0:
-                ll_box_array = ll_box_array[keep, :]
-                ll_max_conf = ll_max_conf[keep]
-                ll_max_id = ll_max_id[keep]
-
-                for k in range(ll_box_array.shape[0]):
-                    trt_detections.append(
-                        (
-                            self.class_names[ll_max_id[k]],
-                            ll_max_conf[k],
-                            (
-                                ll_box_array[k, 0],
-                                ll_box_array[k, 1],
-                                ll_box_array[k, 2],
-                                ll_box_array[k, 3],
-                            ),
-                        )
-                    )
+        for bb, scr, cls in zip(boxes, scores, classes):
+            trt_detections.append((self.class_names[int(cls)], scr, bb))
 
         return self._postpreprocessing(trt_detections)
+
+    def __del__(self):
+        """Free CUDA memories."""
+        del self.outputs
+        del self.inputs
+        del self.stream

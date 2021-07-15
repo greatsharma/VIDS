@@ -73,7 +73,6 @@ class VehicleTracking(object):
         self.logged_ids = []
         self.log_buffer = deque([])
 
-        self._init_detector()
         self._init_tracker()
 
         self.lock = threading.Lock()
@@ -351,6 +350,7 @@ class VehicleTracking(object):
             self._compress_video(self.video_filename, compressed_filename, True)
 
     def run(self):
+        self._init_detector()
         self.frame_count = 0
         self.out_frame = None
 
@@ -443,7 +443,7 @@ class VehicleTracking(object):
             if self.output:
                 self.videowriter.write(self.out_frame)
 
-            # cv2.imshow("VIDS", out_frame)
+            # cv2.imshow("VIDS", self.out_frame)
             # key = cv2.waitKey(1)
             
             # if key == ord("p"):
@@ -470,6 +470,7 @@ class VehicleTracking(object):
                     break
                 frame_ = buffer.tobytes()
             yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_ + b"\r\n")
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -617,6 +618,7 @@ if __name__ == "__main__":
     )
 
     print("\n")
+    # vt_obj.run()
     t = threading.Thread(target=vt_obj.run)
     t.daemon = True
     t.start()
