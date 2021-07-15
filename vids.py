@@ -362,7 +362,7 @@ class VehicleTracking(object):
                 self.video_filename,
                 cv2.VideoWriter_fourcc("M", "J", "P", "G"),
                 self.output_fps,
-                (1360, 540),
+                (1216, 540),
             )
 
         tik1 = time.time()
@@ -459,8 +459,8 @@ class VehicleTracking(object):
                 success, buffer = cv2.imencode(".jpg", self.out_frame)
                 if not success:
                     break
-                frame_ = buffer.tobytes()
-            yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_ + b"\r\n")
+                frame_bytes = buffer.tobytes()
+            yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
 
 
 if __name__ == "__main__":
