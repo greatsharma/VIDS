@@ -37,7 +37,6 @@ class VehicleTracking(object):
         max_absent,
         min_continous_presence,
         direction_detector_interval,
-        mode,
     ):
 
         if input_path.startswith("inputs"):
@@ -60,7 +59,6 @@ class VehicleTracking(object):
         self.max_absent = max_absent
         self.min_continous_presence = min_continous_presence
         self.direction_detector_interval = direction_detector_interval
-        self.mode = mode
 
         self.speed_detector = init_speed_detector(self.camera_meta)
 
@@ -410,23 +408,22 @@ class VehicleTracking(object):
 
             draw_tracked_objects(self, frame, tracked_objects)
 
-            if self.mode == "debug":
-                for l in [1,2,3,4]:
-                    cv2.polylines(frame, [self.camera_meta[f"lane{l}"]["lane_coords"]],
-                        isClosed=True, color=(0, 0, 0), thickness=1,
-                    )
-                    cv2.circle(frame, self.camera_meta[f"lane{l}"]["lane_ref"],
-                        radius=3, color=(0, 0, 255), thickness=-1,
-                    )
+            # for l in [1,2,3,4]:
+            #     cv2.polylines(frame, [self.camera_meta[f"lane{l}"]["lane_coords"]],
+            #         isClosed=True, color=(0, 0, 0), thickness=1,
+            #     )
+            #     cv2.circle(frame, self.camera_meta[f"lane{l}"]["lane_ref"],
+            #         radius=3, color=(0, 0, 255), thickness=-1,
+            #     )
 
-                    pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_rightdirection"]
-                    cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
+            #     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_rightdirection"]
+            #     cv2.line(frame, pt1, pt2, (255, 255, 0), 1)
 
-                    pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
-                    cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
+            #     pt1, pt2 = self.camera_meta[f"lane{l}"]["deregistering_line_wrongdirection"]
+            #     cv2.line(frame, pt1, pt2, (0, 255, 255), 1)
 
-                    for ref in self.camera_meta[f"lane{l}"]["speed_reflines"]:
-                        cv2.line(frame, ref[0], ref[1], (255, 0, 255), 1)
+            #     for ref in self.camera_meta[f"lane{l}"]["speed_reflines"]:
+            #         cv2.line(frame, ref[0], ref[1], (255, 0, 255), 1)
 
             draw_text_with_backgroud(
                 self.img_for_log,
@@ -577,15 +574,6 @@ if __name__ == "__main__":
     )
 
     ap.add_argument(
-        "-m",
-        "--mode",
-        type=str,
-        required=False,
-        default="release",
-        help="execution mode, either `debug`, `release`, `pretty`",
-    )
-
-    ap.add_argument(
         "-ip",
         type=str,
         required=False,
@@ -614,7 +602,6 @@ if __name__ == "__main__":
         args["max_absent"],
         args["min_continous_presence"],
         args["direction_detector_interval"],
-        args["mode"],
     )
 
     print("\n")

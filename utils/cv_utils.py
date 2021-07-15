@@ -1,5 +1,5 @@
 import cv2
-import numpy as np
+import math
 
 
 CLASS_COLOR = {
@@ -46,6 +46,43 @@ def draw_text_with_backgroud(
         color=foreground,
         thickness=thickness,
     )
+
+
+def checkpoint(h, k, x, y, a, b, angle):
+    angle = math.radians(angle)
+
+    cosa = math.cos(angle)
+    sina = math.sin(angle)
+
+    n1 = math.pow(cosa * (x - h) + sina * (y - k), 2)
+    n2 = math.pow(sina * (x - h) - cosa * (y - k), 2)
+
+    d1 = a * a
+    d2 = b * b
+
+    return (n1 / d1) + (n2 / d2)
+
+
+def draw_ellipse(obj, obj_bottom, frame, base_color, path=[], check_point=False):
+    centre = tuple(round(c) for c in obj.eos.centre)
+    semi_majoraxis = obj.eos.semi_majoraxis
+    semi_minoraxis = obj.eos.semi_minoraxis
+    angle = obj.eos.angle
+
+    cv2.circle(frame, centre, radius=3, color=(0, 255, 0), thickness=-1)
+    cv2.circle(frame, obj_bottom, radius=3, color=(0, 0, 255), thickness=-1)
+    cv2.ellipse(frame, center=centre, axes=(semi_majoraxis, semi_minoraxis), angle=angle,
+                startAngle=0, endAngle=360, color=base_color, thickness=1)
+
+    if len(path) > 2:
+        cv2.arrowedLine(frame, path[-2], path[-1], (0, 0, 0), 2)
+
+    if check_point:
+        v = checkpoint(centre[0], centre[1], obj_bottom[0], obj_bottom[1], semi_majoraxis, semi_minoraxis, angle)
+        if v > 1:
+            print(f"objid: {obj.objid}, v: {v}, out\n\n")
+        elif v == 1:
+            print(f"objid: {obj.objid}, v: {v}, on\n\n")
 
 
 def draw_tracked_objects(self, frame, tracked_objs):
@@ -160,37 +197,13 @@ def draw_tracked_objects(self, frame, tracked_objs):
             path = obj.path[path_length - mtp :]
             path_length = len(path)
 
-        # prev_point = tuple(round(p) for p in path[0])
-        # for pt in path[1:]:
-        #     pt = tuple(round(p) for p in pt)
-        #     cv2.line(frame, prev_point, pt, base_color, thickness=2)
-        #     prev_point = pt
-
-        prev_point = None
-        for pt, perc, size in zip(path, np.linspace(0.1, 0.5, path_length), [1]*15 + [2]*10 + [3]*15):
+        prev_point = tuple(round(p) for p in path[0])
+        for pt in path[1:]:
             pt = tuple(round(p) for p in pt)
-            if not prev_point is None:
-                color = tuple(np.array(base_color)*(1-perc))
-                cv2.line(frame, prev_point, pt, color, thickness=size, lineType=8)
+            cv2.line(frame, prev_point, pt, base_color, thickness=2)
             prev_point = pt
 
-        if self.mode == "debug":
-            centre = tuple(round(c) for c in obj.eos.centre)
-            semi_majoraxis = obj.eos.semi_majoraxis
-            semi_minoraxis = obj.eos.semi_minoraxis
-            angle = obj.eos.angle
-            cv2.circle(frame, centre, radius=3, color=(0, 255, 0), thickness=-1)
-            cv2.circle(frame, obj_bottom, radius=3, color=(0, 0, 255), thickness=-1)
-            cv2.ellipse(
-                frame,
-                center=centre,
-                axes=(semi_majoraxis, semi_minoraxis),
-                angle=angle,
-                startAngle=0,
-                endAngle=360,
-                color=base_color,
-                thickness=1,
-            )
-
+        # draw_ellipse(obj, obj_bottom, frame, base_color)
+        
     for obj_id in to_deregister:
         self.tracker._deregister_object(obj_id)
