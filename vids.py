@@ -52,6 +52,9 @@ class VehicleTracking(object):
 
         self.camera_meta = CAMERA_METADATA[self.camera_id]
 
+        if not os.path.exists(f"outputs/{self.camera_id}"):
+            os.mkdir(f"outputs/{self.camera_id}/")
+        
         self.resize = resize
         self.detection_thresh = detection_thresh
         self.tracker_type = tracker_type
@@ -583,6 +586,9 @@ if __name__ == "__main__":
     )
 
     args = vars(ap.parse_args())
+
+    if not os.path.exists("outputs/"):
+        os.mkdir("outputs")
 
     vt_obj = VehicleTracking(
         args["input"],
