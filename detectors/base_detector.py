@@ -2,8 +2,6 @@ import os
 import re
 from typing import Callable
 
-import darknet
-import tensorrt as trt
 from utils import nonmax_suppression
 
 
@@ -39,6 +37,8 @@ class BaseDetector(object):
             self._warmup_yolo()
 
     def _warmup_yolo(self):
+        import darknet
+
         self.config_path = self.path_to_yolostuffs + "yolov4-tiny_416-3.cfg"
         if not os.path.exists(self.config_path):
             raise ValueError(

@@ -612,4 +612,4 @@ if __name__ == "__main__":
     def video_feed():
         return Response(vt_obj.gen_frame(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-    serve(app, host="127.0.0.1", port=args["port"])
+    serve(app, host=args["ip"], port=args["port"])
