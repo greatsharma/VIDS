@@ -67,7 +67,7 @@ class VehicleTracking(object):
         if self.output_fps is None:
             self.output_fps = int(self.vidcap.get(cv2.CAP_PROP_FPS))
 
-        self.logbuffer_length = 13
+        self.logbuffer_length = 15
         self.logged_ids = []
         self.log_buffer = deque([])
 
@@ -86,7 +86,7 @@ class VehicleTracking(object):
             self.frame_h, self.frame_w = self.resize
 
         self.img_for_log = np.zeros(
-            (self.frame_h, int(self.frame_w / 2.4), 3), dtype=np.uint8
+            (self.frame_h, int(self.frame_w / 3.75), 3), dtype=np.uint8
         )
         self.img_for_log[:, :, 0:3] = (243, 227, 218)
 
@@ -208,15 +208,15 @@ class VehicleTracking(object):
                 obj_class = obj.obj_class[0]
                 obj_time = obj.starttime.strftime("%Y:%m:%d:%H:%M:%S")[11:]
                 obj_direction = obj.direction
-                obj_speed = str(obj.instspeed_list[-1]) + " kmph"
-                if obj_direction == "wrong" or obj_speed == "0 kmph":
+                obj_speed = str(obj.instspeed_list[-1])
+                if obj_direction == "wrong" or obj_speed == "0":
                     obj_speed = ""
 
                 log_tuple = (obj_lane, obj_class, obj_time, obj_speed, obj_direction)
 
                 if len(self.log_buffer) >= self.logbuffer_length:
                     self.log_buffer.rotate(-1)
-                    self.log_buffer[12] = log_tuple
+                    self.log_buffer[self.logbuffer_length-1] = log_tuple
                 else:
                     self.log_buffer.append(log_tuple)
 
@@ -224,15 +224,14 @@ class VehicleTracking(object):
 
         self.img_for_log[:, :, 0:3] = (243, 227, 218)
 
-        for name, xcoord in zip(["Lane", "Class", "Time", "Speed"], [15, 90, 180, 290]):
+        for name, xcoord in zip(["Lane", "Class", "Time", "kmph"], [5, 60, 130, 195]):
             draw_text_with_backgroud(
                 self.img_for_log,
                 name,
                 x=xcoord,
                 y=80,
-                font_scale=0.6,
+                font_scale=0.5,
                 thickness=2,
-                font=cv2.FONT_HERSHEY_COMPLEX,
                 background=None,
                 foreground=(10, 10, 10),
             )
@@ -243,15 +242,14 @@ class VehicleTracking(object):
             if row[-1] == "wrong":
                 foreground=(0, 0, 255)
 
-            for col, xcoord in zip(row, [15, 100, 170, 280]):
+            for col, xcoord in zip(row, [5, 70, 120, 200]):
                 draw_text_with_backgroud(
                     self.img_for_log,
                     col,
                     x=xcoord,
                     y=y,
-                    font_scale=0.5,
+                    font_scale=0.4,
                     thickness=1,
-                    font=cv2.FONT_HERSHEY_COMPLEX,
                     background=None,
                     foreground=foreground
                 )
@@ -260,23 +258,21 @@ class VehicleTracking(object):
         draw_text_with_backgroud(
             self.img_for_log,
             "Lanes Congestion",
-            x=15, y=420,
-            font_scale=0.6,
+            x=5, y=440,
+            font_scale=0.5,
             thickness=2,
-            font=cv2.FONT_HERSHEY_COMPLEX,
             background=None,
             foreground=(10, 10, 10),
             )
 
-        for txt, (xcoord, ycoord) in zip(["Lane 1+2 - ", "Lane 3+4 - "], [(15, 460), (15, 500)]):
+        for txt, (xcoord, ycoord) in zip(["Lane 1+2 - ", "Lane 3+4 - "], [(5, 470), (5, 500)]):
             draw_text_with_backgroud(
                 self.img_for_log,
                 txt,
                 x=xcoord,
                 y=ycoord,
-                font_scale=0.5,
+                font_scale=0.4,
                 thickness=1,
-                font=cv2.FONT_HERSHEY_COMPLEX,
                 background=None,
                 foreground=(10, 10, 10),
             )
@@ -302,11 +298,10 @@ class VehicleTracking(object):
             draw_text_with_backgroud(
                 self.img_for_log,
                 txt,
-                x=xcoord + 120,
+                x=xcoord + 100,
                 y=ycoord,
-                font_scale=0.5,
+                font_scale=0.4,
                 thickness=1,
-                font=cv2.FONT_HERSHEY_COMPLEX,
                 background=None,
                 foreground=foreground,
             )
@@ -428,10 +423,9 @@ class VehicleTracking(object):
             draw_text_with_backgroud(
                 self.img_for_log,
                 "VIDS",
-                x=150, y=30,
-                font_scale=1,
+                x=100, y=30,
+                font_scale=0.8,
                 thickness=2,
-                font=cv2.FONT_HERSHEY_COMPLEX,
                 background=None,
                 foreground=(10, 10, 10),
                 )
