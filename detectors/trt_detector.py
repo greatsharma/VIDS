@@ -11,7 +11,7 @@ from detectors import BaseDetector
 
 
 try:
-    ctypes.cdll.LoadLibrary('detectors/libyolo_layer.so')
+    ctypes.cdll.LoadLibrary("yolo_stuff/libyolo_layer.so")
 except OSError as e:
     raise SystemExit('ERROR: failed to load detectors/libyolo_layer.so.  '
                      'Did you forget to do a "make" in the "./plugins/" '

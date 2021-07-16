@@ -145,6 +145,5 @@ notebooks/
 inputs/
 outputs/
 temp.py
-*.weights
-*.trt
+yolo_stuff/
 TODO.txt
