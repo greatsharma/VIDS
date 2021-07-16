@@ -23,7 +23,7 @@ from utils import init_position_wrt_midrefs, init_speed_detector
 app = Flask(__name__)
 
 
-class VehicleTracking(object):
+class VIDS(object):
     def __init__(
         self,
         input_path,
@@ -590,7 +590,7 @@ if __name__ == "__main__":
     if not os.path.exists("outputs/"):
         os.mkdir("outputs")
 
-    vt_obj = VehicleTracking(
+    vids_obj = VIDS(
         args["input"],
         args["inference"],
         args["output"],
@@ -605,8 +605,8 @@ if __name__ == "__main__":
     )
 
     print("\n")
-    # vt_obj.run()
-    t = threading.Thread(target=vt_obj.run)
+    # vids_obj.run()
+    t = threading.Thread(target=vids_obj.run)
     t.daemon = True
     t.start()
 
@@ -616,6 +616,6 @@ if __name__ == "__main__":
 
     @app.route("/video_feed")
     def video_feed():
-        return Response(vt_obj.gen_frame(), mimetype="multipart/x-mixed-replace; boundary=frame")
+        return Response(vids_obj.gen_frame(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
     serve(app, host=args["ip"], port=args["port"])
