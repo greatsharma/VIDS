@@ -8,10 +8,8 @@ import threading
 import subprocess
 import numpy as np
 from collections import deque
-from flask import Flask
-from flask import Response
-from flask import render_template
 from waitress import serve
+from flask import Flask, Response, render_template, request
 
 from camera_metadata import CAMERA_METADATA
 from trackers import CentroidTracker, KalmanTracker
@@ -38,6 +36,9 @@ class VIDS(object):
         min_continous_presence,
         direction_detector_interval,
     ):
+
+        self.pause_stream = False
+        self.stop_stream = False
 
         if input_path.startswith("inputs"):
             self.camera_id = input_path.split("/")[1].split("_")[0]
@@ -446,10 +447,20 @@ class VIDS(object):
             #     break
 
             tok = time.time()
-            curr_fps = round(1.0 / (tok-tik2), 4)
-            avg_fps = round(self.frame_count / (tok-tik1), 4)
-            print(self.frame_count, curr_fps, avg_fps)
+            curr_fps = round(1.0 / (tok-tik2), 2)
+            avg_fps = round(self.frame_count / (tok-tik1), 1)
 
+            print(f"fc: {self.frame_count}, ifps: {curr_fps}, afps: {avg_fps}")
+
+            if self.pause_stream:
+                print("Stream Paused")
+                while True:
+                    if not self.pause_stream:
+                        break
+            
+            if self.stop_stream:
+                break
+    
         if self.output:
             self._clean_exit()
     
@@ -483,9 +494,9 @@ if __name__ == "__main__":
         "--inference",
         type=str,
         required=False,
-        default="vanilla",
+        default="trt",
         choices=["vanilla", "trt"],
-        help="type pf inference",
+        help="type of inference",
     )
 
     ap.add_argument(
@@ -610,8 +621,15 @@ if __name__ == "__main__":
     t.daemon = True
     t.start()
 
-    @app.route("/")
+    @app.route("/", methods=["GET","POST"])
     def index():
+        if request.method == "POST":
+            if 'pause-button' in request.form:
+                vids_obj.pause_stream = True
+            elif 'play-button' in request.form:
+                vids_obj.pause_stream = False
+            elif 'stop-button' in request.form:
+                vids_obj.stop_stream = True
         return render_template("index.html")
 
     @app.route("/video_feed")
