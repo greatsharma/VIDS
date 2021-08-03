@@ -465,7 +465,7 @@ class VIDS(object):
             self._clean_exit()
     
         self.vidcap.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
     def gen_frame(self):
         while True:
