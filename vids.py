@@ -625,9 +625,7 @@ if __name__ == "__main__":
     def index():
         if request.method == "POST":
             if 'pause-button' in request.form:
-                vids_obj.pause_stream = True
-            elif 'play-button' in request.form:
-                vids_obj.pause_stream = False
+                vids_obj.pause_stream = not vids_obj.pause_stream
             elif 'stop-button' in request.form:
                 vids_obj.stop_stream = True
         return render_template("index.html")
