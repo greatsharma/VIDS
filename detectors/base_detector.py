@@ -2,8 +2,6 @@ import os
 import re
 from typing import Callable
 
-import darknet
-import tensorrt as trt
 from utils import nonmax_suppression
 
 
@@ -29,27 +27,9 @@ class BaseDetector(object):
         ]
         self.num_classes = len(self.class_names)
         self.path_to_yolostuffs = "yolo_stuff/"
-        self.path_to_trtengine = self.path_to_yolostuffs + "yolov4-tiny-416.trt"
 
-        self.config_path = self.path_to_yolostuffs + "yolov4-tiny_416-3.cfg"
-
-        if not os.path.exists(self.config_path):
-            raise ValueError(
-                "Invalid config path `" + os.path.abspath(self.config_path) + "`"
-            )
-
-        self.yolo_width = None
-        self.yolo_height = None
-
-        cfg_file = open(self.config_path, "r")
-        for line in cfg_file.readlines():
-            if self.yolo_width is None or self.yolo_height is None:
-                if "width=" in line:
-                    self.yolo_width = int(line.split("=", 1)[1])
-                elif "height=" in line:
-                    self.yolo_height = int(line.split("=", 1)[1])
-            else:
-                break
+        self.yolo_width = 416
+        self.yolo_height = 416
 
         if self.__class__.__name__ == "TrtYoloDetector":
             self._warmup_trt()
@@ -57,6 +37,14 @@ class BaseDetector(object):
             self._warmup_yolo()
 
     def _warmup_yolo(self):
+        import darknet
+
+        self.config_path = self.path_to_yolostuffs + "yolov4-tiny_416-3.cfg"
+        if not os.path.exists(self.config_path):
+            raise ValueError(
+                "Invalid config path `" + os.path.abspath(self.config_path) + "`"
+            )
+
         weight_path = self.pathconfig_path = self.path_to_yolostuffs + "yolov4-tiny_416-3_final.weights"
         if not os.path.exists(weight_path):
             raise ValueError(
@@ -103,18 +91,6 @@ class BaseDetector(object):
             3,
         )
 
-    def _warmup_trt(self):
-        TRT_LOGGER = trt.Logger(trt.Logger.Severity.ERROR)
-        print("Reading engine from file {}".format(self.path_to_trtengine))
-        with open(self.path_to_trtengine, "rb") as f, trt.Runtime(
-            TRT_LOGGER
-        ) as runtime:
-            self.engine = runtime.deserialize_cuda_engine(f.read())
-            self.context = self.engine.create_execution_context()
-
-        self.buffers = self._allocate_buffers(self.engine, 1)
-        self.context.set_binding_shape(0, (1, 3, self.yolo_height, self.yolo_width))
-
     def detect(self, curr_frame) -> list:
         raise NotImplementedError(
             f"detect function of {self.__class__.__name__} is not implemented"
@@ -127,11 +103,10 @@ class BaseDetector(object):
         for obj_class, obj_prob, obj_bbox in detections:
 
             if self.__class__.__name__ == "TrtYoloDetector":
-
-                x1 = obj_bbox[0] * self.frame_w
-                y1 = obj_bbox[1] * self.frame_h
-                x2 = obj_bbox[2] * self.frame_w
-                y2 = obj_bbox[3] * self.frame_h
+                x1 = obj_bbox[0]
+                y1 = obj_bbox[1]
+                x2 = obj_bbox[2]
+                y2 = obj_bbox[3]
 
             else:
                 obj_class = str(obj_class.decode())

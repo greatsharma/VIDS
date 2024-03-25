@@ -1,0 +1,26 @@
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>VIDS</title>
+    <link rel="icon" href="../static/vrt.jpeg" type="image/x-icon">
+    <link rel=" stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+
+  <body>
+      <div class="row">
+          <div class="column">
+              <h1 id=header>VIDS Live Streaming</h1>
+              
+              <img src="{{ url_for('video_feed') }}" width="80%" height="60%">
+
+              <form class="btn-form" action="/" method="post">
+                <input type="submit" name="pause-button" value="Pause/Play Stream" class="btn"><br>
+                <input type="submit" name="stop-button" value="Stop Stream" class="btn">
+              </form>
+          </div>
+      </div>
+  </body>
+</html> 
